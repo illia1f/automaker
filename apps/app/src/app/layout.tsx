@@ -1,18 +1,11 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { GeistSans as GeistSansFont } from "geist/font/sans";
+import { GeistMono as GeistMonoFont } from "geist/font/mono";
 import { Toaster } from "sonner";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
+const GeistSans = GeistSansFont({ variable: "--font-geist-sans" });
+const GeistMono = GeistMonoFont({ variable: "--font-geist-mono" });
 export const metadata: Metadata = {
   title: "Automaker - Autonomous AI Development Studio",
   description: "Build software autonomously with intelligent orchestration",
@@ -26,7 +19,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${GeistSans.variable} ${GeistMono.variable} antialiased`}
       >
         {children}
         <Toaster richColors position="bottom-right" />
