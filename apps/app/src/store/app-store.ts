@@ -48,7 +48,8 @@ export interface ShortcutKey {
 }
 
 // Helper to parse shortcut string to ShortcutKey object
-export function parseShortcut(shortcut: string): ShortcutKey {
+export function parseShortcut(shortcut: string | undefined | null): ShortcutKey {
+  if (!shortcut) return { key: "" };
   const parts = shortcut.split("+").map((p) => p.trim());
   const result: ShortcutKey = { key: parts[parts.length - 1] };
 
@@ -80,7 +81,8 @@ export function parseShortcut(shortcut: string): ShortcutKey {
 }
 
 // Helper to format ShortcutKey to display string
-export function formatShortcut(shortcut: string, forDisplay = false): string {
+export function formatShortcut(shortcut: string | undefined | null, forDisplay = false): string {
+  if (!shortcut) return "";
   const parsed = parseShortcut(shortcut);
   const parts: string[] = [];
 
