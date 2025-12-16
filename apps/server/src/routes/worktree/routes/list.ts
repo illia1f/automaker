@@ -8,7 +8,7 @@
 import type { Request, Response } from "express";
 import { exec } from "child_process";
 import { promisify } from "util";
-import { isGitRepo, getErrorMessage, logError } from "../common.js";
+import { isGitRepo, getErrorMessage, logError, normalizePath } from "../common.js";
 
 const execAsync = promisify(exec);
 
@@ -64,7 +64,7 @@ export function createListHandler() {
 
       for (const line of lines) {
         if (line.startsWith("worktree ")) {
-          current.path = line.slice(9);
+          current.path = normalizePath(line.slice(9));
         } else if (line.startsWith("branch ")) {
           current.branch = line.slice(7).replace("refs/heads/", "");
         } else if (line === "") {

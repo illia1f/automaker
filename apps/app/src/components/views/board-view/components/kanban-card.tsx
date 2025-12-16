@@ -866,9 +866,9 @@ export const KanbanCard = memo(function KanbanCard({
             <>
               {onViewOutput && (
                 <Button
-                  variant="default"
+                  variant="secondary"
                   size="sm"
-                  className="flex-1 h-7 text-[11px] bg-[var(--status-info)] hover:bg-[var(--status-info)]/90"
+                  className="flex-1 h-7 text-[11px]"
                   onClick={(e) => {
                     e.stopPropagation();
                     onViewOutput();
@@ -880,7 +880,7 @@ export const KanbanCard = memo(function KanbanCard({
                   Logs
                   {shortcutKey && (
                     <span
-                      className="ml-1.5 px-1 py-0.5 text-[9px] font-mono rounded bg-white/20"
+                      className="ml-1.5 px-1 py-0.5 text-[9px] font-mono rounded bg-foreground/10"
                       data-testid={`shortcut-key-${feature.id}`}
                     >
                       {shortcutKey}
@@ -972,7 +972,7 @@ export const KanbanCard = memo(function KanbanCard({
           )}
           {!isCurrentAutoTask && feature.status === "verified" && (
             <>
-              {/* Logs button - styled like Refine */}
+              {/* Logs button */}
               {onViewOutput && (
                 <Button
                   variant="secondary"

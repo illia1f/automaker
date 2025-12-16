@@ -7,7 +7,7 @@ import { exec } from "child_process";
 import { promisify } from "util";
 import path from "path";
 import { mkdir, access } from "fs/promises";
-import { isGitRepo, getErrorMessage, logError } from "../common.js";
+import { isGitRepo, getErrorMessage, logError, normalizePath } from "../common.js";
 import { trackBranch } from "./branch-tracking.js";
 
 const execAsync = promisify(exec);
@@ -48,14 +48,10 @@ export function createCreateHandler() {
       // Check if worktree already exists
       try {
         await access(worktreePath);
-        // Worktree already exists, return it instead of error
-        res.json({
-          success: true,
-          worktree: {
-            path: worktreePath,
-            branch: branchName,
-            isNew: false,
-          },
+        // Worktree already exists, return error
+        res.status(400).json({
+          success: false,
+          error: `Worktree "${branchName}" already exists`,
         });
         return;
       } catch {
@@ -96,7 +92,7 @@ export function createCreateHandler() {
       res.json({
         success: true,
         worktree: {
-          path: worktreePath,
+          path: normalizePath(worktreePath),
           branch: branchName,
           isNew: !branchExists,
         },

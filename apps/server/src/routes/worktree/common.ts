@@ -14,6 +14,15 @@ const logger = createLogger("Worktree");
 const execAsync = promisify(exec);
 
 /**
+ * Normalize path separators to forward slashes for cross-platform consistency.
+ * This ensures paths from `path.join()` (backslashes on Windows) match paths
+ * from git commands (which may use forward slashes).
+ */
+export function normalizePath(p: string): string {
+  return p.replace(/\\/g, "/");
+}
+
+/**
  * Check if a path is a git repo
  */
 export async function isGitRepo(repoPath: string): Promise<boolean> {

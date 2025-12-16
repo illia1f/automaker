@@ -7,7 +7,7 @@ import { exec } from "child_process";
 import { promisify } from "util";
 import path from "path";
 import fs from "fs/promises";
-import { getErrorMessage, logError } from "../common.js";
+import { getErrorMessage, logError, normalizePath } from "../common.js";
 
 const execAsync = promisify(exec);
 
@@ -38,7 +38,7 @@ export function createInfoHandler() {
         });
         res.json({
           success: true,
-          worktreePath,
+          worktreePath: normalizePath(worktreePath),
           branchName: stdout.trim(),
         });
       } catch {
