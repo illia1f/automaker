@@ -23,6 +23,73 @@ import { isAbortError, classifyError } from "../lib/error-handler.js";
 
 const execAsync = promisify(exec);
 
+type PlanningMode = 'skip' | 'lite' | 'spec' | 'full';
+
+interface PlanSpec {
+  status: 'pending' | 'generating' | 'generated' | 'approved' | 'rejected';
+  content?: string;
+  version: number;
+  generatedAt?: string;
+  approvedAt?: string;
+  reviewedByUser: boolean;
+  tasksCompleted?: number;
+  tasksTotal?: number;
+}
+
+const PLANNING_PROMPTS = {
+  lite: `## Planning Phase (Lite Mode)
+
+Before implementing, create a brief planning outline:
+
+1. **Goal**: What are we accomplishing? (1 sentence)
+2. **Approach**: How will we do it? (2-3 sentences)
+3. **Files to Touch**: List files and what changes
+4. **Tasks**: Numbered task list (3-7 items)
+5. **Risks**: Any gotchas to watch for
+
+Present this outline, then proceed with implementation.`,
+
+  spec: `## Specification Phase (Spec Mode)
+
+Before implementing, generate a specification and WAIT for approval:
+
+1. **Problem**: What problem are we solving? (user perspective)
+2. **Solution**: Brief approach (1 sentence)
+3. **Acceptance Criteria**: 3-5 items in GIVEN-WHEN-THEN format
+4. **Files to Modify**: Table with File, Purpose, Action
+5. **Tasks**: Numbered implementation tasks
+
+After generating the spec, output:
+"[SPEC_GENERATED] Please review the specification above. Reply with 'approved' to proceed or provide feedback for revisions."
+
+DO NOT proceed with implementation until you receive explicit approval.`,
+
+  full: `## Full Specification Phase (Full SDD Mode)
+
+Before implementing, generate a comprehensive specification and WAIT for approval:
+
+1. **Problem Statement**: 2-3 sentences, user perspective
+2. **User Story**: As a [user], I want [goal], so that [benefit]
+3. **Acceptance Criteria**: Multiple scenarios with GIVEN-WHEN-THEN
+   - Happy path scenario
+   - Edge case scenarios
+   - Error handling scenarios
+4. **Technical Context**:
+   - Files to modify (table format)
+   - Dependencies
+   - Constraints
+   - Existing patterns to follow
+5. **Non-Goals**: What this feature explicitly does NOT include
+6. **Implementation Plan**: Phased tasks (Phase 1: Foundation, Phase 2: Core, etc.)
+7. **Success Metrics**: How we know it's done
+8. **Risks & Mitigations**: Table of risks
+
+After generating, output:
+"[SPEC_GENERATED] Please review the comprehensive specification above. Reply with 'approved' to proceed or provide feedback for revisions."
+
+DO NOT proceed with implementation until you receive explicit approval.`
+};
+
 interface Feature {
   id: string;
   category: string;
@@ -41,6 +108,8 @@ interface Feature {
         [key: string]: unknown;
       }
   >;
+  planningMode?: PlanningMode;
+  planSpec?: PlanSpec;
 }
 
 interface RunningFeature {
@@ -235,8 +304,19 @@ export class AutoModeService {
       // Update feature status to in_progress
       await this.updateFeatureStatus(projectPath, featureId, "in_progress");
 
-      // Build the prompt
-      const prompt = this.buildFeaturePrompt(feature);
+      // Build the prompt with planning phase if needed
+      const featurePrompt = this.buildFeaturePrompt(feature);
+      const planningPrefix = this.getPlanningPromptPrefix(feature);
+      const prompt = planningPrefix + featurePrompt;
+
+      // Emit planning mode info
+      if (feature.planningMode && feature.planningMode !== 'skip') {
+        this.emitAutoModeEvent('planning_started', {
+          featureId: feature.id,
+          mode: feature.planningMode,
+          message: `Starting ${feature.planningMode} planning phase`
+        });
+      }
 
       // Extract image paths from feature
       const imagePaths = feature.imagePaths?.map((img) =>
@@ -991,6 +1071,24 @@ Format your response as a structured markdown document.`;
 
     // Truncate to 60 characters and add ellipsis
     return firstLine.substring(0, 57) + "...";
+  }
+
+  /**
+   * Get the planning prompt prefix based on feature's planning mode
+   */
+  private getPlanningPromptPrefix(feature: Feature): string {
+    const mode = feature.planningMode || 'skip';
+
+    if (mode === 'skip') {
+      return ''; // No planning phase
+    }
+
+    const planningPrompt = PLANNING_PROMPTS[mode];
+    if (!planningPrompt) {
+      return '';
+    }
+
+    return planningPrompt + '\n\n---\n\n## Feature Request\n\n';
   }
 
   /**

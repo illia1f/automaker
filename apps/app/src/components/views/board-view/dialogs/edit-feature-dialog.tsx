@@ -19,7 +19,7 @@ import {
   FeatureImagePath as DescriptionImagePath,
   ImagePreviewMap,
 } from "@/components/ui/description-image-dropzone";
-import { MessageSquare, Settings2, FlaskConical, Sparkles, ChevronDown, GitBranch } from "lucide-react";
+import { MessageSquare, Settings2, SlidersHorizontal, Sparkles, ChevronDown, GitBranch } from "lucide-react";
 import { toast } from "sonner";
 import { getElectronAPI } from "@/lib/electron";
 import { modelSupportsThinking } from "@/lib/utils";
@@ -29,6 +29,7 @@ import {
   ThinkingLevel,
   AIProfile,
   useAppStore,
+  PlanningMode,
 } from "@/store/app-store";
 import {
   ModelSelector,
@@ -36,6 +37,7 @@ import {
   ProfileQuickSelect,
   TestingTabContent,
   PrioritySelector,
+  PlanningModeSelector,
 } from "../shared";
 import {
   DropdownMenu,
@@ -59,6 +61,7 @@ interface EditFeatureDialogProps {
       thinkingLevel: ThinkingLevel;
       imagePaths: DescriptionImagePath[];
       priority: number;
+      planningMode: PlanningMode;
     }
   ) => void;
   categorySuggestions: string[];
@@ -85,13 +88,16 @@ export function EditFeatureDialog({
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [enhancementMode, setEnhancementMode] = useState<'improve' | 'technical' | 'simplify' | 'acceptance'>('improve');
   const [showDependencyTree, setShowDependencyTree] = useState(false);
+  const [planningMode, setPlanningMode] = useState<PlanningMode>(feature?.planningMode ?? 'skip');
 
   // Get enhancement model from store
   const { enhancementModel } = useAppStore();
 
   useEffect(() => {
     setEditingFeature(feature);
-    if (!feature) {
+    if (feature) {
+      setPlanningMode(feature.planningMode ?? 'skip');
+    } else {
       setEditFeaturePreviewMap(new Map());
       setShowEditAdvancedOptions(false);
     }
@@ -114,6 +120,7 @@ export function EditFeatureDialog({
       thinkingLevel: normalizedThinking,
       imagePaths: editingFeature.imagePaths ?? [],
       priority: editingFeature.priority ?? 2,
+      planningMode,
     };
 
     onUpdate(editingFeature.id, updates);
@@ -186,13 +193,13 @@ export function EditFeatureDialog({
       <DialogContent
         compact={!isMaximized}
         data-testid="edit-feature-dialog"
-        onPointerDownOutside={(e) => {
+        onPointerDownOutside={(e: CustomEvent) => {
           const target = e.target as HTMLElement;
           if (target.closest('[data-testid="category-autocomplete-list"]')) {
             e.preventDefault();
           }
         }}
-        onInteractOutside={(e) => {
+        onInteractOutside={(e: CustomEvent) => {
           const target = e.target as HTMLElement;
           if (target.closest('[data-testid="category-autocomplete-list"]')) {
             e.preventDefault();
@@ -216,9 +223,9 @@ export function EditFeatureDialog({
               <Settings2 className="w-4 h-4 mr-2" />
               Model
             </TabsTrigger>
-            <TabsTrigger value="testing" data-testid="edit-tab-testing">
-              <FlaskConical className="w-4 h-4 mr-2" />
-              Testing
+            <TabsTrigger value="options" data-testid="edit-tab-options">
+              <SlidersHorizontal className="w-4 h-4 mr-2" />
+              Options
             </TabsTrigger>
           </TabsList>
 
@@ -381,8 +388,20 @@ export function EditFeatureDialog({
             )}
           </TabsContent>
 
-          {/* Testing Tab */}
-          <TabsContent value="testing" className="space-y-4 overflow-y-auto cursor-default">
+          {/* Options Tab */}
+          <TabsContent value="options" className="space-y-4 overflow-y-auto cursor-default">
+            {/* Planning Mode Section */}
+            <PlanningModeSelector
+              mode={planningMode}
+              onModeChange={setPlanningMode}
+              featureDescription={editingFeature.description}
+              testIdPrefix="edit-feature"
+              compact
+            />
+
+            <div className="border-t border-border my-4" />
+
+            {/* Testing Section */}
             <TestingTabContent
               skipTests={editingFeature.skipTests ?? false}
               onSkipTestsChange={(skipTests) =>

@@ -260,6 +260,9 @@ export type ModelProvider = "claude";
 // Thinking level (budget_tokens) options
 export type ThinkingLevel = "none" | "low" | "medium" | "high" | "ultrathink";
 
+// Planning mode for feature specifications
+export type PlanningMode = 'skip' | 'lite' | 'spec' | 'full';
+
 // AI Provider Profile - user-defined presets for model configurations
 export interface AIProfile {
   id: string;
@@ -297,6 +300,20 @@ export interface Feature {
   worktreePath?: string; // Path to the worktree directory
   branchName?: string; // Name of the feature branch
   justFinishedAt?: string; // ISO timestamp when agent just finished and moved to waiting_approval (shows badge for 2 minutes)
+  planningMode?: PlanningMode; // Planning mode for this feature
+  planSpec?: PlanSpec; // Generated spec/plan data
+}
+
+// PlanSpec status for feature planning/specification
+export interface PlanSpec {
+  status: 'pending' | 'generating' | 'generated' | 'approved' | 'rejected';
+  content?: string; // The actual spec/plan markdown content
+  version: number;
+  generatedAt?: string; // ISO timestamp
+  approvedAt?: string; // ISO timestamp
+  reviewedByUser: boolean; // True if user has seen the spec
+  tasksCompleted?: number;
+  tasksTotal?: number;
 }
 
 // File tree node for project analysis
@@ -442,6 +459,8 @@ export interface AppState {
   // Spec Creation State (per-project, keyed by project path)
   // Tracks which project is currently having its spec generated
   specCreatingForProject: string | null;
+
+  defaultPlanningMode: PlanningMode;
 }
 
 // Default background settings for board backgrounds
@@ -651,6 +670,8 @@ export interface AppActions {
   setSpecCreatingForProject: (projectPath: string | null) => void;
   isSpecCreatingForProject: (projectPath: string) => boolean;
 
+  setDefaultPlanningMode: (mode: PlanningMode) => void;
+
   // Reset
   reset: () => void;
 }
@@ -736,6 +757,7 @@ const initialState: AppState = {
     defaultFontSize: 14,
   },
   specCreatingForProject: null,
+  defaultPlanningMode: 'skip' as PlanningMode,
 };
 
 export const useAppStore = create<AppState & AppActions>()(
@@ -2115,6 +2137,8 @@ export const useAppStore = create<AppState & AppActions>()(
         return get().specCreatingForProject === projectPath;
       },
 
+      setDefaultPlanningMode: (mode) => set({ defaultPlanningMode: mode }),
+
       // Reset
       reset: () => set(initialState),
     }),
@@ -2180,6 +2204,7 @@ export const useAppStore = create<AppState & AppActions>()(
         lastSelectedSessionByProject: state.lastSelectedSessionByProject,
         // Board background settings
         boardBackgroundByProject: state.boardBackgroundByProject,
+        defaultPlanningMode: state.defaultPlanningMode,
       }),
     }
   )

@@ -19,7 +19,7 @@ import {
   FeatureImagePath as DescriptionImagePath,
   ImagePreviewMap,
 } from "@/components/ui/description-image-dropzone";
-import { MessageSquare, Settings2, FlaskConical, Sparkles, ChevronDown } from "lucide-react";
+import { MessageSquare, Settings2, SlidersHorizontal, Sparkles, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { getElectronAPI } from "@/lib/electron";
 import { modelSupportsThinking } from "@/lib/utils";
@@ -29,6 +29,7 @@ import {
   ThinkingLevel,
   FeatureImage,
   AIProfile,
+  PlanningMode,
 } from "@/store/app-store";
 import {
   ModelSelector,
@@ -36,6 +37,7 @@ import {
   ProfileQuickSelect,
   TestingTabContent,
   PrioritySelector,
+  PlanningModeSelector,
 } from "../shared";
 import {
   DropdownMenu,
@@ -57,6 +59,7 @@ interface AddFeatureDialogProps {
     model: AgentModel;
     thinkingLevel: ThinkingLevel;
     priority: number;
+    planningMode: PlanningMode;
   }) => void;
   categorySuggestions: string[];
   defaultSkipTests: boolean;
@@ -92,19 +95,21 @@ export function AddFeatureDialog({
   const [descriptionError, setDescriptionError] = useState(false);
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [enhancementMode, setEnhancementMode] = useState<'improve' | 'technical' | 'simplify' | 'acceptance'>('improve');
+  const [planningMode, setPlanningMode] = useState<PlanningMode>('skip');
 
-  // Get enhancement model from store
-  const { enhancementModel } = useAppStore();
+  // Get enhancement model and default planning mode from store
+  const { enhancementModel, defaultPlanningMode } = useAppStore();
 
-  // Sync skipTests default when dialog opens
+  // Sync defaults when dialog opens
   useEffect(() => {
     if (open) {
       setNewFeature((prev) => ({
         ...prev,
         skipTests: defaultSkipTests,
       }));
+      setPlanningMode(defaultPlanningMode);
     }
-  }, [open, defaultSkipTests]);
+  }, [open, defaultSkipTests, defaultPlanningMode]);
 
   const handleAdd = () => {
     if (!newFeature.description.trim()) {
@@ -128,6 +133,7 @@ export function AddFeatureDialog({
       model: selectedModel,
       thinkingLevel: normalizedThinking,
       priority: newFeature.priority,
+      planningMode,
     });
 
     // Reset form
@@ -142,6 +148,7 @@ export function AddFeatureDialog({
       priority: 2,
       thinkingLevel: "none",
     });
+    setPlanningMode(defaultPlanningMode);
     setNewFeaturePreviewMap(new Map());
     setShowAdvancedOptions(false);
     setDescriptionError(false);
@@ -209,13 +216,13 @@ export function AddFeatureDialog({
       <DialogContent
         compact={!isMaximized}
         data-testid="add-feature-dialog"
-        onPointerDownOutside={(e) => {
+        onPointerDownOutside={(e: CustomEvent) => {
           const target = e.target as HTMLElement;
           if (target.closest('[data-testid="category-autocomplete-list"]')) {
             e.preventDefault();
           }
         }}
-        onInteractOutside={(e) => {
+        onInteractOutside={(e: CustomEvent) => {
           const target = e.target as HTMLElement;
           if (target.closest('[data-testid="category-autocomplete-list"]')) {
             e.preventDefault();
@@ -241,9 +248,9 @@ export function AddFeatureDialog({
               <Settings2 className="w-4 h-4 mr-2" />
               Model
             </TabsTrigger>
-            <TabsTrigger value="testing" data-testid="tab-testing">
-              <FlaskConical className="w-4 h-4 mr-2" />
-              Testing
+            <TabsTrigger value="options" data-testid="tab-options">
+              <SlidersHorizontal className="w-4 h-4 mr-2" />
+              Options
             </TabsTrigger>
           </TabsList>
 
@@ -395,8 +402,20 @@ export function AddFeatureDialog({
             )}
           </TabsContent>
 
-          {/* Testing Tab */}
-          <TabsContent value="testing" className="space-y-4 overflow-y-auto cursor-default">
+          {/* Options Tab */}
+          <TabsContent value="options" className="space-y-4 overflow-y-auto cursor-default">
+            {/* Planning Mode Section */}
+            <PlanningModeSelector
+              mode={planningMode}
+              onModeChange={setPlanningMode}
+              featureDescription={newFeature.description}
+              testIdPrefix="add-feature"
+              compact
+            />
+
+            <div className="border-t border-border my-4" />
+
+            {/* Testing Section */}
             <TestingTabContent
               skipTests={newFeature.skipTests}
               onSkipTestsChange={(skipTests) =>

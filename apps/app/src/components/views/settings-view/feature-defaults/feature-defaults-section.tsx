@@ -1,24 +1,40 @@
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { FlaskConical, Settings2, TestTube, GitBranch } from "lucide-react";
+import {
+  FlaskConical, Settings2, TestTube, GitBranch,
+  Zap, ClipboardList, FileText, ScrollText
+} from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+type PlanningMode = 'skip' | 'lite' | 'spec' | 'full';
 
 interface FeatureDefaultsSectionProps {
   showProfilesOnly: boolean;
   defaultSkipTests: boolean;
   useWorktrees: boolean;
+  defaultPlanningMode: PlanningMode;
   onShowProfilesOnlyChange: (value: boolean) => void;
   onDefaultSkipTestsChange: (value: boolean) => void;
   onUseWorktreesChange: (value: boolean) => void;
+  onDefaultPlanningModeChange: (value: PlanningMode) => void;
 }
 
 export function FeatureDefaultsSection({
   showProfilesOnly,
   defaultSkipTests,
   useWorktrees,
+  defaultPlanningMode,
   onShowProfilesOnlyChange,
   onDefaultSkipTestsChange,
   onUseWorktreesChange,
+  onDefaultPlanningModeChange,
 }: FeatureDefaultsSectionProps) {
   return (
     <div
@@ -43,6 +59,76 @@ export function FeatureDefaultsSection({
         </p>
       </div>
       <div className="p-6 space-y-5">
+        {/* Planning Mode Default */}
+        <div className="group flex items-start space-x-3 p-3 rounded-xl hover:bg-accent/30 transition-colors duration-200 -mx-3">
+          <div className={cn(
+            "w-10 h-10 mt-0.5 rounded-xl flex items-center justify-center shrink-0",
+            defaultPlanningMode === 'skip' ? "bg-emerald-500/10" :
+            defaultPlanningMode === 'lite' ? "bg-blue-500/10" :
+            defaultPlanningMode === 'spec' ? "bg-purple-500/10" :
+            "bg-amber-500/10"
+          )}>
+            {defaultPlanningMode === 'skip' && <Zap className="w-5 h-5 text-emerald-500" />}
+            {defaultPlanningMode === 'lite' && <ClipboardList className="w-5 h-5 text-blue-500" />}
+            {defaultPlanningMode === 'spec' && <FileText className="w-5 h-5 text-purple-500" />}
+            {defaultPlanningMode === 'full' && <ScrollText className="w-5 h-5 text-amber-500" />}
+          </div>
+          <div className="flex-1 space-y-2">
+            <div className="flex items-center justify-between">
+              <Label className="text-foreground font-medium">
+                Default Planning Mode
+              </Label>
+              <Select
+                value={defaultPlanningMode}
+                onValueChange={(v: string) => onDefaultPlanningModeChange(v as PlanningMode)}
+              >
+                <SelectTrigger
+                  className="w-[160px] h-8"
+                  data-testid="default-planning-mode-select"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="skip">
+                    <div className="flex items-center gap-2">
+                      <Zap className="h-3.5 w-3.5 text-emerald-500" />
+                      <span>Skip</span>
+                      <span className="text-[10px] text-muted-foreground">(Default)</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="lite">
+                    <div className="flex items-center gap-2">
+                      <ClipboardList className="h-3.5 w-3.5 text-blue-500" />
+                      <span>Lite Planning</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="spec">
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-3.5 w-3.5 text-purple-500" />
+                      <span>Spec (Lite SDD)</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="full">
+                    <div className="flex items-center gap-2">
+                      <ScrollText className="h-3.5 w-3.5 text-amber-500" />
+                      <span>Full (SDD)</span>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <p className="text-xs text-muted-foreground/80 leading-relaxed">
+              {defaultPlanningMode === 'skip' && "Jump straight to implementation without upfront planning."}
+              {defaultPlanningMode === 'lite' && "Create a quick planning outline with tasks before building."}
+              {defaultPlanningMode === 'spec' && "Generate a specification with acceptance criteria for approval."}
+              {defaultPlanningMode === 'full' && "Create comprehensive spec with phased implementation plan."}
+            </p>
+          </div>
+        </div>
+
+        {/* Separator */}
+        <div className="border-t border-border/30" />
+
         {/* Profiles Only Setting */}
         <div className="group flex items-start space-x-3 p-3 rounded-xl hover:bg-accent/30 transition-colors duration-200 -mx-3">
           <Checkbox

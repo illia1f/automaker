@@ -38,6 +38,8 @@ export function SettingsView() {
     setMuteDoneSound,
     currentProject,
     moveProjectToTrash,
+    defaultPlanningMode,
+    setDefaultPlanningMode,
   } = useAppStore();
 
   // Convert electron Project to settings-view Project type
@@ -119,9 +121,11 @@ export function SettingsView() {
             showProfilesOnly={showProfilesOnly}
             defaultSkipTests={defaultSkipTests}
             useWorktrees={useWorktrees}
+            defaultPlanningMode={defaultPlanningMode}
             onShowProfilesOnlyChange={setShowProfilesOnly}
             onDefaultSkipTestsChange={setDefaultSkipTests}
             onUseWorktreesChange={setUseWorktrees}
+            onDefaultPlanningModeChange={setDefaultPlanningMode}
           />
         );
       case "danger":
