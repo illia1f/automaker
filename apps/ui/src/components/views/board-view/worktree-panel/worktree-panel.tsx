@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { GitBranch, Plus, RefreshCw } from "lucide-react";
 import { cn, pathsEqual } from "@/lib/utils";
@@ -88,18 +87,20 @@ export function WorktreePanel({
       : pathsEqual(worktree.path, currentWorktreePath);
   };
 
-  const handleBranchDropdownOpenChange = (worktree: WorktreeInfo) => (open: boolean) => {
-    if (open) {
-      fetchBranches(worktree.path);
-      resetBranchFilter();
-    }
-  };
+  const handleBranchDropdownOpenChange =
+    (worktree: WorktreeInfo) => (open: boolean) => {
+      if (open) {
+        fetchBranches(worktree.path);
+        resetBranchFilter();
+      }
+    };
 
-  const handleActionsDropdownOpenChange = (worktree: WorktreeInfo) => (open: boolean) => {
-    if (open) {
-      fetchBranches(worktree.path);
-    }
-  };
+  const handleActionsDropdownOpenChange =
+    (worktree: WorktreeInfo) => (open: boolean) => {
+      if (open) {
+        fetchBranches(worktree.path);
+      }
+    };
 
   if (!useWorktreesEnabled) {
     return null;
@@ -108,7 +109,7 @@ export function WorktreePanel({
   return (
     <div className="flex items-center gap-2 px-4 py-2 border-b border-border bg-glass/50 backdrop-blur-sm">
       <GitBranch className="w-4 h-4 text-muted-foreground" />
-      <span className="text-sm text-muted-foreground mr-2">Branch:</span>
+      <span className="text-sm text-muted-foreground mr-2">Worktrees:</span>
 
       <div className="flex items-center gap-2 flex-wrap">
         {worktrees.map((worktree) => {
@@ -137,8 +138,12 @@ export function WorktreePanel({
               aheadCount={aheadCount}
               behindCount={behindCount}
               onSelectWorktree={handleSelectWorktree}
-              onBranchDropdownOpenChange={handleBranchDropdownOpenChange(worktree)}
-              onActionsDropdownOpenChange={handleActionsDropdownOpenChange(worktree)}
+              onBranchDropdownOpenChange={handleBranchDropdownOpenChange(
+                worktree
+              )}
+              onActionsDropdownOpenChange={handleActionsDropdownOpenChange(
+                worktree
+              )}
               onBranchFilterChange={setBranchFilter}
               onSwitchBranch={handleSwitchBranch}
               onCreateBranch={onCreateBranch}
@@ -172,7 +177,11 @@ export function WorktreePanel({
           className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
           onClick={async () => {
             const removedWorktrees = await fetchWorktrees();
-            if (removedWorktrees && removedWorktrees.length > 0 && onRemovedWorktrees) {
+            if (
+              removedWorktrees &&
+              removedWorktrees.length > 0 &&
+              onRemovedWorktrees
+            ) {
               onRemovedWorktrees(removedWorktrees);
             }
           }}
