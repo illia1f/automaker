@@ -9,7 +9,7 @@ import {
   getErrorMessage,
   logError,
 } from "../common.js";
-import { createLogger } from "../../../lib/logger.js";
+import { createLogger } from "@automaker/utils";
 
 const logger = createLogger("Setup");
 
@@ -36,9 +36,12 @@ export function createStoreApiKeyHandler() {
         process.env.ANTHROPIC_API_KEY = apiKey;
         await persistApiKeyToEnv("ANTHROPIC_API_KEY", apiKey);
         logger.info("[Setup] Stored API key as ANTHROPIC_API_KEY");
-      } else if (provider === "google") {
-        process.env.GOOGLE_API_KEY = apiKey;
-        await persistApiKeyToEnv("GOOGLE_API_KEY", apiKey);
+      } else {
+        res.status(400).json({
+          success: false,
+          error: `Unsupported provider: ${provider}. Only anthropic is supported.`,
+        });
+        return;
       }
 
       res.json({ success: true });

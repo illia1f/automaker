@@ -1,6 +1,7 @@
-@import "tailwindcss";
-@import "tw-animate-css";
+@import 'tailwindcss';
+@import 'tw-animate-css';
 
+/* Dark themes */
 @custom-variant dark (&:is(.dark *));
 @custom-variant retro (&:is(.retro *));
 @custom-variant dracula (&:is(.dracula *));
@@ -13,9 +14,27 @@
 @custom-variant onedark (&:is(.onedark *));
 @custom-variant synthwave (&:is(.synthwave *));
 @custom-variant red (&:is(.red *));
-@custom-variant cream (&:is(.cream *));
 @custom-variant sunset (&:is(.sunset *));
 @custom-variant gray (&:is(.gray *));
+@custom-variant forest (&:is(.forest *));
+@custom-variant ocean (&:is(.ocean *));
+
+/* Light themes */
+@custom-variant cream (&:is(.cream *));
+@custom-variant solarizedlight (&:is(.solarizedlight *));
+@custom-variant github (&:is(.github *));
+@custom-variant paper (&:is(.paper *));
+@custom-variant rose (&:is(.rose *));
+@custom-variant mint (&:is(.mint *));
+@custom-variant lavender (&:is(.lavender *));
+@custom-variant sand (&:is(.sand *));
+@custom-variant sky (&:is(.sky *));
+@custom-variant peach (&:is(.peach *));
+@custom-variant snow (&:is(.snow *));
+@custom-variant sepia (&:is(.sepia *));
+@custom-variant gruvboxlight (&:is(.gruvboxlight *));
+@custom-variant nordlight (&:is(.nordlight *));
+@custom-variant blossom (&:is(.blossom *));
 
 @theme inline {
   --color-background: var(--background);
@@ -201,7 +220,7 @@
     /* Card and popover backgrounds */
     --card: oklch(0.14 0 0);
     --card-foreground: oklch(1 0 0);
-    --popover: oklch(0.10 0 0);
+    --popover: oklch(0.1 0 0);
     --popover-foreground: oklch(1 0 0);
 
     /* Brand colors - purple/violet theme */
@@ -336,7 +355,6 @@
   --running-indicator-text: oklch(0.6 0.22 265);
 }
 
-
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -351,19 +369,19 @@
 
   /* Ensure all clickable elements show pointer cursor */
   button:not(:disabled),
-  [role="button"]:not([aria-disabled="true"]),
+  [role='button']:not([aria-disabled='true']),
   a[href],
-  input[type="button"]:not(:disabled),
-  input[type="submit"]:not(:disabled),
-  input[type="reset"]:not(:disabled),
+  input[type='button']:not(:disabled),
+  input[type='submit']:not(:disabled),
+  input[type='reset']:not(:disabled),
   select:not(:disabled),
-  [tabindex]:not([tabindex="-1"]):not(:disabled) {
+  [tabindex]:not([tabindex='-1']):not(:disabled) {
     cursor: pointer;
   }
 
   /* Disabled elements should show not-allowed cursor */
   button:disabled,
-  [role="button"][aria-disabled="true"],
+  [role='button'][aria-disabled='true'],
   input:disabled,
   select:disabled,
   textarea:disabled {
@@ -372,12 +390,44 @@
 }
 
 /* Custom scrollbar for dark themes */
-:is(.dark, .retro, .dracula, .nord, .monokai, .tokyonight, .solarized, .gruvbox, .catppuccin, .onedark, .synthwave, .red, .sunset, .gray) ::-webkit-scrollbar {
+:is(
+    .dark,
+    .retro,
+    .dracula,
+    .nord,
+    .monokai,
+    .tokyonight,
+    .solarized,
+    .gruvbox,
+    .catppuccin,
+    .onedark,
+    .synthwave,
+    .red,
+    .sunset,
+    .gray
+  )
+  ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
-:is(.dark, .retro, .dracula, .nord, .monokai, .tokyonight, .solarized, .gruvbox, .catppuccin, .onedark, .synthwave, .red, .sunset, .gray) ::-webkit-scrollbar-track {
+:is(
+    .dark,
+    .retro,
+    .dracula,
+    .nord,
+    .monokai,
+    .tokyonight,
+    .solarized,
+    .gruvbox,
+    .catppuccin,
+    .onedark,
+    .synthwave,
+    .red,
+    .sunset,
+    .gray
+  )
+  ::-webkit-scrollbar-track {
   background: var(--muted);
 }
 
@@ -392,11 +442,11 @@
 
 /* Retro Scrollbar override */
 .retro ::-webkit-scrollbar-thumb {
-    background: var(--primary);
-    border-radius: 0;
+  background: var(--primary);
+  border-radius: 0;
 }
 .retro ::-webkit-scrollbar-track {
-    background: var(--background);
+  background: var(--background);
 }
 
 /* Red theme scrollbar */
@@ -518,8 +568,6 @@
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
   }
-  
-  
 
   /* Hover state utilities */
   .hover-glass {
@@ -542,8 +590,6 @@
   .content-bg {
     background: var(--background);
   }
-
-
 
   /* Action button utilities */
   .bg-action-view {
@@ -588,8 +634,9 @@
   }
 
   .shadow-running-indicator\/50 {
-    box-shadow: 0 10px 15px -3px color-mix(in oklch, var(--running-indicator), transparent 50%),
-                0 4px 6px -4px color-mix(in oklch, var(--running-indicator), transparent 50%);
+    box-shadow:
+      0 10px 15px -3px color-mix(in oklch, var(--running-indicator), transparent 50%),
+      0 4px 6px -4px color-mix(in oklch, var(--running-indicator), transparent 50%);
   }
 
   .text-running-indicator {
@@ -632,131 +679,77 @@
 
 /* Retro Overrides for Utilities */
 
-
-
 .retro * {
-    border-radius: 0 !important;
+  border-radius: 0 !important;
 }
 
 /* Animated Outline Button Styles */
 .animated-outline-gradient {
-    /* Default gradient - purple to blue */
-    background: conic-gradient(from 90deg at 50% 50%, #a855f7 0%, #3b82f6 50%, #a855f7 100%);
+  /* Default gradient - purple to blue */
+  background: conic-gradient(from 90deg at 50% 50%, #a855f7 0%, #3b82f6 50%, #a855f7 100%);
 }
 
 /* Light mode - deeper purple to blue gradient for better visibility */
 
-
-
 /* Dark mode - purple to blue gradient */
-
-
 
 /* Retro mode - unique scanline + neon effect */
 
 @keyframes retro-glow {
-    from {
-        filter: brightness(1) drop-shadow(0 0 2px #00ff41);
-    }
-    to {
-        filter: brightness(1.2) drop-shadow(0 0 8px #00ff41);
-    }
+  from {
+    filter: brightness(1) drop-shadow(0 0 2px #00ff41);
+  }
+  to {
+    filter: brightness(1.2) drop-shadow(0 0 8px #00ff41);
+  }
 }
-
-
-
 
 /* Dracula animated-outline - purple/pink */
 
-
-
 /* Nord animated-outline - frost blue */
-
-
 
 /* Monokai animated-outline - pink/yellow */
 
-
-
 /* Tokyo Night animated-outline - blue/magenta */
-
-
 
 /* Solarized animated-outline - blue/cyan */
 
-
-
 /* Gruvbox animated-outline - yellow/orange */
-
-
 
 /* Catppuccin animated-outline - mauve/pink */
 
-
-
 /* One Dark animated-outline - blue/magenta */
-
-
 
 /* Synthwave animated-outline - hot pink/cyan with glow */
 
 @keyframes synthwave-glow {
-    from {
-        filter: brightness(1) drop-shadow(0 0 3px #f97e72);
-    }
-    to {
-        filter: brightness(1.3) drop-shadow(0 0 10px #ff7edb);
-    }
+  from {
+    filter: brightness(1) drop-shadow(0 0 3px #f97e72);
+  }
+  to {
+    filter: brightness(1.3) drop-shadow(0 0 10px #ff7edb);
+  }
 }
-
-
 
 /* Slider Theme Styles */
 
-
-
-
-
-
-
-
-
-
 /* Dracula slider */
-
-
 
 /* Nord slider */
 
-
-
 /* Monokai slider */
-
-
 
 /* Tokyo Night slider */
 
-
-
 /* Solarized slider */
-
-
 
 /* Gruvbox slider */
 
-
-
 /* Catppuccin slider */
-
-
 
 /* One Dark slider */
 
-
-
 /* Synthwave slider */
-
-
 
 /* Line clamp utilities for text overflow prevention */
 .line-clamp-2 {
@@ -807,135 +800,27 @@
 
 /* Light theme - professional and readable */
 
-
-
-
-
-
-
-
-
-
 /* Dark theme - high contrast */
-
-
-
-
-
-
-
-
-
 
 /* Retro theme - neon green on black */
 
-
-
-
-
-
-
-
-
-
 /* Dracula theme */
-
-
-
-
-
-
-
-
-
 
 /* Nord theme */
 
-
-
-
-
-
-
-
-
-
 /* Monokai theme */
-
-
-
-
-
-
-
-
-
 
 /* Tokyo Night theme */
 
-
-
-
-
-
-
-
-
-
 /* Solarized theme */
-
-
-
-
-
-
-
-
-
 
 /* Gruvbox theme */
 
-
-
-
-
-
-
-
-
-
 /* Catppuccin theme */
-
-
-
-
-
-
-
-
-
 
 /* One Dark theme */
 
-
-
-
-
-
-
-
-
-
 /* Synthwave theme */
-
-
-
-
-
-
-
-
-
 
 /* XML Editor container styles */
 .xml-editor {

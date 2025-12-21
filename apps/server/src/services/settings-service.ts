@@ -7,16 +7,16 @@
  * - Per-project settings ({projectPath}/.automaker/settings.json)
  */
 
-import fs from "fs/promises";
-import path from "path";
-import { createLogger } from "../lib/logger.js";
+import { createLogger } from "@automaker/utils";
+import * as secureFs from "../lib/secure-fs.js";
+
 import {
   getGlobalSettingsPath,
   getCredentialsPath,
   getProjectSettingsPath,
   ensureDataDir,
   ensureAutomakerDir,
-} from "../lib/automaker-paths.js";
+} from "@automaker/platform";
 import type {
   GlobalSettings,
   Credentials,
@@ -47,12 +47,12 @@ async function atomicWriteJson(filePath: string, data: unknown): Promise<void> {
   const content = JSON.stringify(data, null, 2);
 
   try {
-    await fs.writeFile(tempPath, content, "utf-8");
-    await fs.rename(tempPath, filePath);
+    await secureFs.writeFile(tempPath, content, "utf-8");
+    await secureFs.rename(tempPath, filePath);
   } catch (error) {
     // Clean up temp file if it exists
     try {
-      await fs.unlink(tempPath);
+      await secureFs.unlink(tempPath);
     } catch {
       // Ignore cleanup errors
     }
@@ -65,7 +65,7 @@ async function atomicWriteJson(filePath: string, data: unknown): Promise<void> {
  */
 async function readJsonFile<T>(filePath: string, defaultValue: T): Promise<T> {
   try {
-    const content = await fs.readFile(filePath, "utf-8");
+    const content = (await secureFs.readFile(filePath, "utf-8")) as string;
     return JSON.parse(content) as T;
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") {
@@ -81,7 +81,7 @@ async function readJsonFile<T>(filePath: string, defaultValue: T): Promise<T> {
  */
 async function fileExists(filePath: string): Promise<boolean> {
   try {
-    await fs.access(filePath);
+    await secureFs.access(filePath);
     return true;
   } catch {
     return false;
@@ -232,9 +232,7 @@ export class SettingsService {
    * @param updates - Partial Credentials (usually just apiKeys)
    * @returns Promise resolving to complete updated Credentials object
    */
-  async updateCredentials(
-    updates: Partial<Credentials>
-  ): Promise<Credentials> {
+  async updateCredentials(updates: Partial<Credentials>): Promise<Credentials> {
     await ensureDataDir(this.dataDir);
     const credentialsPath = getCredentialsPath(this.dataDir);
 
@@ -270,8 +268,6 @@ export class SettingsService {
    */
   async getMaskedCredentials(): Promise<{
     anthropic: { configured: boolean; masked: string };
-    google: { configured: boolean; masked: string };
-    openai: { configured: boolean; masked: string };
   }> {
     const credentials = await this.getCredentials();
 
@@ -284,14 +280,6 @@ export class SettingsService {
       anthropic: {
         configured: !!credentials.apiKeys.anthropic,
         masked: maskKey(credentials.apiKeys.anthropic),
-      },
-      google: {
-        configured: !!credentials.apiKeys.google,
-        masked: maskKey(credentials.apiKeys.google),
-      },
-      openai: {
-        configured: !!credentials.apiKeys.openai,
-        masked: maskKey(credentials.apiKeys.openai),
       },
     };
   }
@@ -563,8 +551,7 @@ export class SettingsService {
           // Get theme from project object
           const project = projects.find((p) => p.path === projectPath);
           if (project?.theme) {
-            projectSettings.theme =
-              project.theme as ProjectSettings["theme"];
+            projectSettings.theme = project.theme as ProjectSettings["theme"];
           }
 
           if (boardBackgroundByProject?.[projectPath]) {
@@ -586,7 +573,9 @@ export class SettingsService {
             migratedProjectCount++;
           }
         } catch (e) {
-          errors.push(`Failed to migrate project settings for ${projectPath}: ${e}`);
+          errors.push(
+            `Failed to migrate project settings for ${projectPath}: ${e}`
+          );
         }
       }
 
