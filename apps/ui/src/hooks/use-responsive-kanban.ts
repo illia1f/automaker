@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, CSSProperties } from 'react';
 
 export interface ResponsiveKanbanConfig {
   columnWidth: number;
@@ -8,21 +8,28 @@ export interface ResponsiveKanbanConfig {
   padding: number;
 }
 
-/**
- * Default configuration for responsive Kanban columns
- */
 const DEFAULT_CONFIG: ResponsiveKanbanConfig = {
   columnWidth: 288, // 18rem = 288px (w-72)
-  columnMinWidth: 280, // Minimum column width - increased to ensure usability
-  columnMaxWidth: 360, // Maximum column width to ensure responsive scaling
+  columnMinWidth: 220, // Minimum column width - increased to ensure usability
+  columnMaxWidth: 440, // Maximum column width to ensure responsive scaling
   gap: 20, // gap-5 = 20px
   padding: 32, // px-4 on both sides = 32px
 };
 
 export interface UseResponsiveKanbanResult {
   columnWidth: number;
-  containerStyle: React.CSSProperties;
+  containerStyle: CSSProperties;
   isCompact: boolean;
+}
+
+/**
+ * Gets the board container element from the DOM
+ * @returns The parent element of the board-view element, or null if not found
+ */
+function getBoardContainer(): HTMLElement | null {
+  return (
+    document.querySelector('[data-testid="board-view"]')?.parentElement ?? null
+  );
 }
 
 /**
@@ -44,13 +51,13 @@ export function useResponsiveKanban(
   };
 
   const calculateColumnWidth = useCallback(() => {
-    if (typeof window === "undefined") {
+    if (typeof window === 'undefined') {
       return DEFAULT_CONFIG.columnWidth;
     }
 
     // Get the actual board container width
     // The flex layout already accounts for sidebar width, so we use the container's actual width
-    const boardContainer = document.querySelector('[data-testid="board-view"]')?.parentElement;
+    const boardContainer = getBoardContainer();
     const containerWidth = boardContainer
       ? boardContainer.clientWidth
       : window.innerWidth;
@@ -78,7 +85,7 @@ export function useResponsiveKanban(
   );
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === 'undefined') return;
 
     const handleResize = () => {
       const newWidth = calculateColumnWidth();
@@ -88,20 +95,44 @@ export function useResponsiveKanban(
     // Set initial width
     handleResize();
 
-    // Use ResizeObserver for more precise updates if available
-    if (typeof ResizeObserver !== "undefined") {
-      const observer = new ResizeObserver(handleResize);
-      observer.observe(document.body);
+    let observer: ResizeObserver | null = null;
+    let retryTimeout: ReturnType<typeof setTimeout> | null = null;
+    const setupObserver = () => {
+      const boardContainer = getBoardContainer();
+      if (boardContainer && typeof window.ResizeObserver !== 'undefined') {
+        observer = new window.ResizeObserver(handleResize);
+        observer.observe(boardContainer);
+        return true;
+      }
+      return false;
+    };
 
-      return () => {
+    const observerCleanup = () => {
+      if (observer) {
         observer.disconnect();
+      }
+    };
+
+    if (setupObserver()) {
+      return () => {
+        observerCleanup();
       };
     }
 
+    // Element might not be mounted yet, retry after a short delay
+    retryTimeout = setTimeout(() => {
+      setupObserver();
+    }, 100);
+
     // Fallback to window resize event
-    window.addEventListener("resize", handleResize);
+    window.addEventListener('resize', handleResize);
+
     return () => {
-      window.removeEventListener("resize", handleResize);
+      observerCleanup();
+      if (retryTimeout) {
+        clearTimeout(retryTimeout);
+      }
+      window.removeEventListener('resize', handleResize);
     };
   }, [calculateColumnWidth]);
 
@@ -109,11 +140,11 @@ export function useResponsiveKanban(
   const isCompact = columnWidth <= columnMinWidth + 10;
 
   // Container style to center content and prevent overflow
-  const containerStyle: React.CSSProperties = {
-    display: "flex",
+  const containerStyle: CSSProperties = {
+    display: 'flex',
     gap: `${gap}px`,
-    height: "100%",
-    justifyContent: "center",
+    height: '100%',
+    justifyContent: 'center',
   };
 
   return {
