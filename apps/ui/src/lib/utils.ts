@@ -61,4 +61,5 @@ export const isMac =
   typeof process !== 'undefined' && process.platform === 'darwin'
     ? true
     : typeof navigator !== 'undefined' &&
-      (/Mac/.test(navigator.userAgent) || navigator.platform?.toLowerCase().includes('mac'));
+      (/Mac/.test(navigator.userAgent) ||
+        (navigator.platform ? navigator.platform.toLowerCase().includes('mac') : false));
