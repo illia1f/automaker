@@ -261,6 +261,8 @@ export interface GlobalSettings {
   // AI Model Selection
   /** Which model to use for feature name/description enhancement */
   enhancementModel: AgentModel;
+  /** Which model to use for GitHub issue validation */
+  validationModel: AgentModel;
 
   // Input Configuration
   /** User's keyboard shortcut bindings */
@@ -437,6 +439,7 @@ export const DEFAULT_GLOBAL_SETTINGS: GlobalSettings = {
   defaultAIProfileId: null,
   muteDoneSound: false,
   enhancementModel: 'sonnet',
+  validationModel: 'opus',
   keyboardShortcuts: DEFAULT_KEYBOARD_SHORTCUTS,
   aiProfiles: [],
   projects: [],

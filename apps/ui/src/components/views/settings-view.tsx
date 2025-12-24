@@ -45,6 +45,8 @@ export function SettingsView() {
     setDefaultAIProfileId,
     aiProfiles,
     apiKeys,
+    validationModel,
+    setValidationModel,
   } = useAppStore();
 
   // Hide usage tracking when using API key (only show for Claude Code CLI users)
@@ -134,6 +136,7 @@ export function SettingsView() {
             defaultRequirePlanApproval={defaultRequirePlanApproval}
             defaultAIProfileId={defaultAIProfileId}
             aiProfiles={aiProfiles}
+            validationModel={validationModel}
             onShowProfilesOnlyChange={setShowProfilesOnly}
             onDefaultSkipTestsChange={setDefaultSkipTests}
             onEnableDependencyBlockingChange={setEnableDependencyBlocking}
@@ -141,6 +144,7 @@ export function SettingsView() {
             onDefaultPlanningModeChange={setDefaultPlanningMode}
             onDefaultRequirePlanApprovalChange={setDefaultRequirePlanApproval}
             onDefaultAIProfileIdChange={setDefaultAIProfileId}
+            onValidationModelChange={setValidationModel}
           />
         );
       case 'danger':
