@@ -96,26 +96,6 @@
   background: var(--background);
 }
 
-.retro .scrollbar-visible::-webkit-scrollbar-thumb {
-  background: var(--primary);
-  border-radius: 0;
-}
-
-.retro .scrollbar-visible::-webkit-scrollbar-track {
-  background: var(--background);
-  border-radius: 0;
-}
-
-.retro .scrollbar-styled::-webkit-scrollbar-thumb {
-  background: var(--primary);
-  border-radius: 0;
-}
-
-.retro .scrollbar-styled::-webkit-scrollbar-track {
-  background: var(--background);
-  border-radius: 0;
-}
-
 .retro .glass,
 .retro .glass-subtle,
 .retro .glass-strong,
