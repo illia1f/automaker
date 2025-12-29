@@ -83,11 +83,6 @@ export function extractRetryAfter(error: unknown): number | undefined {
     return parseInt(waitMatch[1], 10);
   }
 
-  // Default retry-after for rate limit errors
-  if (isRateLimitError(error)) {
-    return 60; // Default to 60 seconds for rate limit errors
-  }
-
   return undefined;
 }
 
@@ -103,7 +98,7 @@ export function classifyError(error: unknown): ErrorInfo {
   const isAuth = isAuthenticationError(message);
   const isCancellation = isCancellationError(message);
   const isRateLimit = isRateLimitError(error);
-  const retryAfter = isRateLimit ? extractRetryAfter(error) : undefined;
+  const retryAfter = isRateLimit ? (extractRetryAfter(error) ?? 60) : undefined;
 
   let type: ErrorType;
   if (isAuth) {

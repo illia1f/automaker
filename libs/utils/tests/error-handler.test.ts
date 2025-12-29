@@ -145,9 +145,9 @@ describe('error-handler.ts', () => {
       expect(extractRetryAfter(error)).toBe(30);
     });
 
-    it('should return default 60 for rate limit errors without explicit retry-after', () => {
+    it('should return undefined for rate limit errors without explicit retry-after', () => {
       const error = new Error('429 rate_limit_error');
-      expect(extractRetryAfter(error)).toBe(60);
+      expect(extractRetryAfter(error)).toBeUndefined();
     });
 
     it('should return undefined for non-rate-limit errors', () => {
