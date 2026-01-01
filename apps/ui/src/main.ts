@@ -736,29 +736,29 @@ app.whenReady().then(async () => {
 });
 
 app.on('window-all-closed', () => {
-  // Stop the server when all windows are closed, even on macOS
-  // This prevents port conflicts when reopening the app
-  if (serverProcess && serverProcess.pid) {
-    console.log('[Electron] All windows closed, stopping server...');
-    if (process.platform === 'win32') {
-      try {
-        execSync(`taskkill /f /t /pid ${serverProcess.pid}`, { stdio: 'ignore' });
-      } catch (error) {
-        console.error('[Electron] Failed to kill server process:', (error as Error).message);
-      }
-    } else {
-      serverProcess.kill('SIGTERM');
-    }
-    serverProcess = null;
-  }
-
-  if (staticServer) {
-    console.log('[Electron] Stopping static server...');
-    staticServer.close();
-    staticServer = null;
-  }
-
+  // On macOS, keep the app and servers running when all windows are closed
+  // (standard macOS behavior). On other platforms, stop servers and quit.
   if (process.platform !== 'darwin') {
+    if (serverProcess && serverProcess.pid) {
+      console.log('[Electron] All windows closed, stopping server...');
+      if (process.platform === 'win32') {
+        try {
+          execSync(`taskkill /f /t /pid ${serverProcess.pid}`, { stdio: 'ignore' });
+        } catch (error) {
+          console.error('[Electron] Failed to kill server process:', (error as Error).message);
+        }
+      } else {
+        serverProcess.kill('SIGTERM');
+      }
+      serverProcess = null;
+    }
+
+    if (staticServer) {
+      console.log('[Electron] Stopping static server...');
+      staticServer.close();
+      staticServer = null;
+    }
+
     app.quit();
   }
 });
