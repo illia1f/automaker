@@ -35,106 +35,71 @@ export function useValidatedProjectCycling() {
     []
   );
 
-  const cyclePrevProject = useCallback(async () => {
-    if (isValidating || projectHistory.length <= 1) return;
+  // Shared helper to cycle through projects in a given direction
+  const cycleProject = useCallback(
+    async (direction: 'prev' | 'next') => {
+      if (isValidating || projectHistory.length <= 1) return;
 
-    setIsValidating(true);
-    try {
-      // Filter history to only include projects that exist in the store
-      const validHistory = projectHistory.filter((id) => projects.some((p) => p.id === id));
+      setIsValidating(true);
+      try {
+        // Filter history to only include projects that exist in the store
+        const validHistory = projectHistory.filter((id) => projects.some((p) => p.id === id));
 
-      if (validHistory.length <= 1) return;
+        if (validHistory.length <= 1) return;
 
-      // Find current position in valid history
-      const currentProjectId = currentProject?.id;
-      let currentIndex = currentProjectId ? validHistory.indexOf(currentProjectId) : 0;
+        // Find current position in valid history
+        const currentProjectId = currentProject?.id;
+        let currentIndex = currentProjectId ? validHistory.indexOf(currentProjectId) : 0;
 
-      if (currentIndex === -1) currentIndex = 0;
+        if (currentIndex === -1) currentIndex = 0;
 
-      // Try cycling through projects until we find a valid one
-      let attempts = 0;
-      const maxAttempts = validHistory.length;
+        // Try cycling through projects until we find a valid one
+        let attempts = 0;
+        const maxAttempts = validHistory.length;
 
-      while (attempts < maxAttempts) {
-        // Move to the next index (going back in history = higher index), wrapping around
-        const newIndex = (currentIndex + 1 + attempts) % validHistory.length;
-        const targetProjectId = validHistory[newIndex];
-        const targetProject = projects.find((p) => p.id === targetProjectId);
+        while (attempts < maxAttempts) {
+          // Calculate new index based on direction
+          const newIndex =
+            direction === 'prev'
+              ? (currentIndex + 1 + attempts) % validHistory.length
+              : (((currentIndex - 1 - attempts) % validHistory.length) + validHistory.length) %
+                validHistory.length;
 
-        if (targetProject && targetProject.id !== currentProject?.id) {
-          // Validate the project path
-          const isValid = await validateProjectPath(targetProject);
+          const targetProjectId = validHistory[newIndex];
+          const targetProject = projects.find((p) => p.id === targetProjectId);
 
-          if (isValid) {
-            // Found a valid project - switch to it without reordering history
-            switchProjectForCycling(targetProject, validHistory, newIndex);
-            navigate({ to: '/board' });
-            return;
+          if (targetProject && targetProject.id !== currentProject?.id) {
+            // Validate the project path
+            const isValid = await validateProjectPath(targetProject);
+
+            if (isValid) {
+              // Found a valid project - switch to it without reordering history
+              switchProjectForCycling(targetProject, validHistory, newIndex);
+              navigate({ to: '/board' });
+              return;
+            }
+            // If invalid, just skip to the next one (no dialog)
           }
-          // If invalid, just skip to the next one (no dialog)
+
+          attempts++;
         }
 
-        attempts++;
+        // No valid projects found in history
+        console.warn('No valid projects found in history');
+      } finally {
+        setIsValidating(false);
       }
+    },
+    [isValidating, projectHistory, projects, currentProject, switchProjectForCycling, navigate]
+  );
 
-      // No valid projects found in history
-      console.warn('No valid projects found in history');
-    } finally {
-      setIsValidating(false);
-    }
-  }, [isValidating, projectHistory, projects, currentProject, switchProjectForCycling, navigate]);
+  const cyclePrevProject = useCallback(async () => {
+    await cycleProject('prev');
+  }, [cycleProject]);
 
   const cycleNextProject = useCallback(async () => {
-    if (isValidating || projectHistory.length <= 1) return;
-
-    setIsValidating(true);
-    try {
-      // Filter history to only include projects that exist in the store
-      const validHistory = projectHistory.filter((id) => projects.some((p) => p.id === id));
-
-      if (validHistory.length <= 1) return;
-
-      // Find current position in valid history
-      const currentProjectId = currentProject?.id;
-      let currentIndex = currentProjectId ? validHistory.indexOf(currentProjectId) : 0;
-
-      if (currentIndex === -1) currentIndex = 0;
-
-      // Try cycling through projects until we find a valid one
-      let attempts = 0;
-      const maxAttempts = validHistory.length;
-
-      while (attempts < maxAttempts) {
-        // Move to the previous index (going forward = lower index), wrapping around
-        // Use proper modulo for negative numbers to correctly cycle through indices
-        const newIndex =
-          (((currentIndex - 1 - attempts) % validHistory.length) + validHistory.length) %
-          validHistory.length;
-        const targetProjectId = validHistory[newIndex];
-        const targetProject = projects.find((p) => p.id === targetProjectId);
-
-        if (targetProject && targetProject.id !== currentProject?.id) {
-          // Validate the project path
-          const isValid = await validateProjectPath(targetProject);
-
-          if (isValid) {
-            // Found a valid project - switch to it without reordering history
-            switchProjectForCycling(targetProject, validHistory, newIndex);
-            navigate({ to: '/board' });
-            return;
-          }
-          // If invalid, just skip to the next one (no dialog)
-        }
-
-        attempts++;
-      }
-
-      // No valid projects found in history
-      console.warn('No valid projects found in history');
-    } finally {
-      setIsValidating(false);
-    }
-  }, [isValidating, projectHistory, projects, currentProject, switchProjectForCycling, navigate]);
+    await cycleProject('next');
+  }, [cycleProject]);
 
   return {
     cyclePrevProject,

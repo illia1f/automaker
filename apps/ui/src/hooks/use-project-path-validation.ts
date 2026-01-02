@@ -40,13 +40,12 @@ export function useProjectPathValidation(options: UseProjectPathValidationOption
         }
 
         // Update project in store
-        const updatedProjects = projects.map((p) =>
-          p.id === project.id ? { ...p, path: newPath, lastOpened: new Date().toISOString() } : p
-        );
+        const updatedProject = { ...project, path: newPath, lastOpened: new Date().toISOString() };
+        const updatedProjects = projects.map((p) => (p.id === project.id ? updatedProject : p));
         setProjects(updatedProjects);
 
         // Update current project reference
-        setCurrentProject({ ...project, path: newPath });
+        setCurrentProject(updatedProject);
 
         // Close dialog
         setValidationDialogOpen(false);
