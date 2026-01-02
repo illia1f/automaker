@@ -19,6 +19,9 @@ import type { Options } from '@anthropic-ai/claude-agent-sdk';
 import os from 'os';
 import path from 'path';
 import { resolveModelString } from '@automaker/model-resolver';
+import { createLogger } from '@automaker/utils';
+
+const logger = createLogger('SdkOptions');
 import {
   DEFAULT_MODELS,
   CLAUDE_MODEL_MAP,
@@ -332,8 +335,8 @@ function buildMcpOptions(config: CreateSdkOptionsConfig): McpPermissionOptions {
  */
 function buildThinkingOptions(thinkingLevel?: ThinkingLevel): Partial<Options> {
   const maxThinkingTokens = getThinkingTokenBudget(thinkingLevel);
-  console.log(
-    `[SDK-Options] buildThinkingOptions: thinkingLevel="${thinkingLevel}" -> maxThinkingTokens=${maxThinkingTokens}`
+  logger.debug(
+    `buildThinkingOptions: thinkingLevel="${thinkingLevel}" -> maxThinkingTokens=${maxThinkingTokens}`
   );
   return maxThinkingTokens ? { maxThinkingTokens } : {};
 }

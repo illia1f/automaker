@@ -97,7 +97,7 @@ export function createDescribeFileHandler(
         return;
       }
 
-      logger.info(`[DescribeFile] Starting description generation for: ${filePath}`);
+      logger.info(`Starting description generation for: ${filePath}`);
 
       // Resolve the path for logging and cwd derivation
       const resolvedPath = secureFs.resolvePath(filePath);
@@ -112,7 +112,7 @@ export function createDescribeFileHandler(
       } catch (readError) {
         // Path not allowed - return 403 Forbidden
         if (readError instanceof PathNotAllowedError) {
-          logger.warn(`[DescribeFile] Path not allowed: ${filePath}`);
+          logger.warn(`Path not allowed: ${filePath}`);
           const response: DescribeFileErrorResponse = {
             success: false,
             error: 'File path is not within the allowed directory',
@@ -128,7 +128,7 @@ export function createDescribeFileHandler(
           'code' in readError &&
           readError.code === 'ENOENT'
         ) {
-          logger.warn(`[DescribeFile] File not found: ${resolvedPath}`);
+          logger.warn(`File not found: ${resolvedPath}`);
           const response: DescribeFileErrorResponse = {
             success: false,
             error: `File not found: ${filePath}`,
@@ -138,7 +138,7 @@ export function createDescribeFileHandler(
         }
 
         const errorMessage = readError instanceof Error ? readError.message : 'Unknown error';
-        logger.error(`[DescribeFile] Failed to read file: ${errorMessage}`);
+        logger.error(`Failed to read file: ${errorMessage}`);
         const response: DescribeFileErrorResponse = {
           success: false,
           error: `Failed to read file: ${errorMessage}`,
@@ -182,23 +182,20 @@ File: ${fileName}${truncated ? ' (truncated)' : ''}`;
 
       // Get model from phase settings
       const settings = await settingsService?.getGlobalSettings();
-      logger.info(
-        `[DescribeFile] Raw phaseModels from settings:`,
-        JSON.stringify(settings?.phaseModels, null, 2)
-      );
+      logger.info(`Raw phaseModels from settings:`, JSON.stringify(settings?.phaseModels, null, 2));
       const phaseModelEntry =
         settings?.phaseModels?.fileDescriptionModel || DEFAULT_PHASE_MODELS.fileDescriptionModel;
-      logger.info(`[DescribeFile] fileDescriptionModel entry:`, JSON.stringify(phaseModelEntry));
+      logger.info(`fileDescriptionModel entry:`, JSON.stringify(phaseModelEntry));
       const { model, thinkingLevel } = resolvePhaseModel(phaseModelEntry);
 
-      logger.info(`[DescribeFile] Resolved model: ${model}, thinkingLevel: ${thinkingLevel}`);
+      logger.info(`Resolved model: ${model}, thinkingLevel: ${thinkingLevel}`);
 
       let description: string;
 
       // Route to appropriate provider based on model type
       if (isCursorModel(model)) {
         // Use Cursor provider for Cursor models
-        logger.info(`[DescribeFile] Using Cursor provider for model: ${model}`);
+        logger.info(`Using Cursor provider for model: ${model}`);
 
         const provider = ProviderFactory.getProviderForModel(model);
 
@@ -225,7 +222,7 @@ File: ${fileName}${truncated ? ' (truncated)' : ''}`;
         description = responseText;
       } else {
         // Use Claude SDK for Claude models
-        logger.info(`[DescribeFile] Using Claude SDK for model: ${model}`);
+        logger.info(`Using Claude SDK for model: ${model}`);
 
         // Use centralized SDK options with proper cwd validation
         // No tools needed since we're passing file content directly

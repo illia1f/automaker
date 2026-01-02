@@ -56,10 +56,10 @@ export class FeatureLoader {
         try {
           // Paths are now absolute
           await secureFs.unlink(oldPath);
-          console.log(`[FeatureLoader] Deleted orphaned image: ${oldPath}`);
+          logger.info(`Deleted orphaned image: ${oldPath}`);
         } catch (error) {
           // Ignore errors when deleting (file may already be gone)
-          logger.warn(`[FeatureLoader] Failed to delete image: ${oldPath}`, error);
+          logger.warn(`Failed to delete image: ${oldPath}`, error);
         }
       }
     }
@@ -101,7 +101,7 @@ export class FeatureLoader {
         try {
           await secureFs.access(fullOriginalPath);
         } catch {
-          logger.warn(`[FeatureLoader] Image not found, skipping: ${fullOriginalPath}`);
+          logger.warn(`Image not found, skipping: ${fullOriginalPath}`);
           continue;
         }
 
@@ -111,7 +111,7 @@ export class FeatureLoader {
 
         // Copy the file
         await secureFs.copyFile(fullOriginalPath, newPath);
-        console.log(`[FeatureLoader] Copied image: ${originalPath} -> ${newPath}`);
+        logger.info(`Copied image: ${originalPath} -> ${newPath}`);
 
         // Try to delete the original temp file
         try {
@@ -202,9 +202,7 @@ export class FeatureLoader {
           const feature = JSON.parse(content);
 
           if (!feature.id) {
-            logger.warn(
-              `[FeatureLoader] Feature ${featureId} missing required 'id' field, skipping`
-            );
+            logger.warn(`Feature ${featureId} missing required 'id' field, skipping`);
             return null;
           }
 
@@ -213,14 +211,9 @@ export class FeatureLoader {
           if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
             return null;
           } else if (error instanceof SyntaxError) {
-            logger.warn(
-              `[FeatureLoader] Failed to parse feature.json for ${featureId}: ${error.message}`
-            );
+            logger.warn(`Failed to parse feature.json for ${featureId}: ${error.message}`);
           } else {
-            logger.error(
-              `[FeatureLoader] Failed to load feature ${featureId}:`,
-              (error as Error).message
-            );
+            logger.error(`Failed to load feature ${featureId}:`, (error as Error).message);
           }
           return null;
         }
@@ -255,7 +248,7 @@ export class FeatureLoader {
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
         return null;
       }
-      logger.error(`[FeatureLoader] Failed to get feature ${featureId}:`, error);
+      logger.error(`Failed to get feature ${featureId}:`, error);
       throw error;
     }
   }
@@ -342,10 +335,10 @@ export class FeatureLoader {
     try {
       const featureDir = this.getFeatureDir(projectPath, featureId);
       await secureFs.rm(featureDir, { recursive: true, force: true });
-      console.log(`[FeatureLoader] Deleted feature ${featureId}`);
+      logger.info(`Deleted feature ${featureId}`);
       return true;
     } catch (error) {
-      logger.error(`[FeatureLoader] Failed to delete feature ${featureId}:`, error);
+      logger.error(`Failed to delete feature ${featureId}:`, error);
       return false;
     }
   }
@@ -362,7 +355,7 @@ export class FeatureLoader {
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
         return null;
       }
-      logger.error(`[FeatureLoader] Failed to get agent output for ${featureId}:`, error);
+      logger.error(`Failed to get agent output for ${featureId}:`, error);
       throw error;
     }
   }
@@ -379,7 +372,7 @@ export class FeatureLoader {
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
         return null;
       }
-      logger.error(`[FeatureLoader] Failed to get raw output for ${featureId}:`, error);
+      logger.error(`Failed to get raw output for ${featureId}:`, error);
       throw error;
     }
   }

@@ -7,7 +7,9 @@
 
 import { query, type Options } from '@anthropic-ai/claude-agent-sdk';
 import { BaseProvider } from './base-provider.js';
-import { classifyError, getUserFriendlyErrorMessage } from '@automaker/utils';
+import { classifyError, getUserFriendlyErrorMessage, createLogger } from '@automaker/utils';
+
+const logger = createLogger('ClaudeProvider');
 import { getThinkingTokenBudget } from '@automaker/types';
 import type {
   ExecuteOptions,
@@ -147,7 +149,7 @@ export class ClaudeProvider extends BaseProvider {
       const errorInfo = classifyError(error);
       const userMessage = getUserFriendlyErrorMessage(error);
 
-      console.error('[ClaudeProvider] executeQuery() error during execution:', {
+      logger.error('executeQuery() error during execution:', {
         type: errorInfo.type,
         message: errorInfo.message,
         isRateLimit: errorInfo.isRateLimit,
