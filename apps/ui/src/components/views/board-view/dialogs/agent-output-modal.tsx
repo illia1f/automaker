@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { createLogger } from '@automaker/utils/logger';
 import {
   Dialog,
   DialogContent,
@@ -28,6 +29,8 @@ interface AgentOutputModalProps {
 }
 
 type ViewMode = 'parsed' | 'raw' | 'changes';
+
+const logger = createLogger('AgentOutputModal');
 
 export function AgentOutputModal({
   open,
@@ -88,7 +91,7 @@ export function AgentOutputModal({
           setOutput('');
         }
       } catch (error) {
-        console.error('Failed to load output:', error);
+        logger.error('Failed to load output:', error);
         setOutput('');
       } finally {
         setIsLoading(false);
@@ -105,11 +108,11 @@ export function AgentOutputModal({
     const api = getElectronAPI();
     if (!api?.autoMode) return;
 
-    console.log('[AgentOutputModal] Subscribing to events for featureId:', featureId);
+    logger.info('Subscribing to events for featureId:', featureId);
 
     const unsubscribe = api.autoMode.onEvent((event) => {
-      console.log(
-        '[AgentOutputModal] Received event:',
+      logger.debug(
+        'Received event:',
         event.type,
         'featureId:',
         'featureId' in event ? event.featureId : 'none',
@@ -119,7 +122,7 @@ export function AgentOutputModal({
 
       // Filter events for this specific feature only (skip events without featureId)
       if ('featureId' in event && event.featureId !== featureId) {
-        console.log('[AgentOutputModal] Skipping event - featureId mismatch');
+        logger.debug('Skipping event - featureId mismatch');
         return;
       }
 

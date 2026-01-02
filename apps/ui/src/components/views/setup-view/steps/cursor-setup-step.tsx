@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { createLogger } from '@automaker/utils/logger';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -18,6 +19,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { StatusBadge } from '../components';
+
+const logger = createLogger('CursorSetupStep');
 
 interface CursorSetupStepProps {
   onNext: () => void;
@@ -67,7 +70,7 @@ export function CursorSetupStep({ onNext, onBack, onSkip }: CursorSetupStepProps
         }
       }
     } catch (error) {
-      console.error('Failed to check Cursor status:', error);
+      logger.error('Failed to check Cursor status:', error);
     } finally {
       setIsChecking(false);
     }
@@ -140,7 +143,7 @@ export function CursorSetupStep({ onNext, onBack, onSkip }: CursorSetupStepProps
         }
       }, 2000);
     } catch (error) {
-      console.error('Login failed:', error);
+      logger.error('Login failed:', error);
       toast.error('Failed to start login process');
       setIsLoggingIn(false);
     }

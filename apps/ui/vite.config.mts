@@ -69,6 +69,12 @@ export default defineConfig(({ command }) => {
     },
     build: {
       outDir: 'dist',
+      rollupOptions: {
+        external: ['child_process', 'fs', 'path', 'crypto', 'http', 'net', 'os', 'util', 'stream', 'events', 'readline'],
+      },
+    },
+    optimizeDeps: {
+      exclude: ['@automaker/platform'],
     },
     define: {
       __APP_VERSION__: JSON.stringify(appVersion),

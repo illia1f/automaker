@@ -248,9 +248,9 @@ describe('claude-provider.ts', () => {
       await expect(collectAsyncGenerator(generator)).rejects.toThrow('SDK execution failed');
 
       // Should log error with classification info (via logger)
-      // Logger format: [Context] message, data
+      // Logger format: 'ERROR [Context]' message, data
       const errorCall = consoleErrorSpy.mock.calls[0];
-      expect(errorCall[0]).toBe('[ClaudeProvider]');
+      expect(errorCall[0]).toMatch(/ERROR.*\[ClaudeProvider\]/);
       expect(errorCall[1]).toBe('executeQuery() error during execution:');
       expect(errorCall[2]).toMatchObject({
         type: expect.any(String),

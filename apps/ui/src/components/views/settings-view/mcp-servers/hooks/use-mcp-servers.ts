@@ -1,5 +1,8 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { createLogger } from '@automaker/utils/logger';
 import { useAppStore } from '@/store/app-store';
+
+const logger = createLogger('MCPServers');
 import { toast } from 'sonner';
 import type { MCPServerConfig } from '@automaker/types';
 import { syncSettingsToServer, loadMCPServersFromServer } from '@/hooks/use-settings-migration';
@@ -72,7 +75,7 @@ export function useMCPServers() {
   // Auto-load MCP servers from settings file on mount
   useEffect(() => {
     loadMCPServersFromServer().catch((error) => {
-      console.error('Failed to load MCP servers on mount:', error);
+      logger.error('Failed to load MCP servers on mount:', error);
     });
   }, []);
 
@@ -431,7 +434,7 @@ export function useMCPServers() {
 
     if (serverData.type === 'stdio') {
       if (!serverConfig.command) {
-        console.warn(`Skipping ${name}: no command specified`);
+        logger.warn(`Skipping ${name}: no command specified`);
         return null;
       }
 
@@ -458,7 +461,7 @@ export function useMCPServers() {
       }
     } else {
       if (!serverConfig.url) {
-        console.warn(`Skipping ${name}: no url specified`);
+        logger.warn(`Skipping ${name}: no url specified`);
         return null;
       }
       serverData.url = serverConfig.url as string;
@@ -491,7 +494,7 @@ export function useMCPServers() {
           const name = config.name as string;
 
           if (!name) {
-            console.warn('Skipping server: no name specified');
+            logger.warn('Skipping server: no name specified');
             skippedCount++;
             continue;
           }

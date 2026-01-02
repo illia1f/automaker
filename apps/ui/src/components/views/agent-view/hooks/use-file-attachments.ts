@@ -1,5 +1,8 @@
 import { useState, useCallback } from 'react';
+import { createLogger } from '@automaker/utils/logger';
 import type { ImageAttachment, TextFileAttachment } from '@/store/app-store';
+
+const logger = createLogger('FileAttachments');
 import {
   fileToBase64,
   generateImageId,
@@ -138,7 +141,7 @@ export function useFileAttachments({
       }
 
       if (errors.length > 0) {
-        console.warn('File upload errors:', errors);
+        logger.warn('File upload errors:', errors);
       }
 
       if (newImages.length > 0) {

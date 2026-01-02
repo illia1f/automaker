@@ -1,5 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
+import { createLogger } from '@automaker/utils/logger';
 import { toast } from 'sonner';
+
+const logger = createLogger('CursorStatus');
 import { getHttpApiClient } from '@/lib/http-api-client';
 import { useSetupStore } from '@/store/setup-store';
 
@@ -48,7 +51,7 @@ export function useCursorStatus() {
         });
       }
     } catch (error) {
-      console.error('Failed to load Cursor settings:', error);
+      logger.error('Failed to load Cursor settings:', error);
       toast.error('Failed to load Cursor settings');
     } finally {
       setIsLoading(false);

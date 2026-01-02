@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createLogger } from '@automaker/utils/logger';
 import {
   Dialog,
   DialogContent,
@@ -56,6 +57,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { DependencyTreeDialog } from './dependency-tree-dialog';
 import { isCursorModel, PROVIDER_PREFIXES } from '@automaker/types';
+
+const logger = createLogger('EditFeatureDialog');
 
 interface EditFeatureDialogProps {
   feature: Feature | null;
@@ -248,7 +251,7 @@ export function EditFeatureDialog({
         toast.error(result?.error || 'Failed to enhance description');
       }
     } catch (error) {
-      console.error('Enhancement failed:', error);
+      logger.error('Enhancement failed:', error);
       toast.error('Failed to enhance description');
     } finally {
       setIsEnhancing(false);

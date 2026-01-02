@@ -1,7 +1,10 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { createLogger } from '@automaker/utils/logger';
 import { cn } from '@/lib/utils';
+
+const logger = createLogger('TaskProgressPanel');
 import { Check, Loader2, Circle, ChevronDown, ChevronRight, FileCode } from 'lucide-react';
 import { getElectronAPI } from '@/lib/electron';
 import type { AutoModeEvent } from '@/types/electron';
@@ -72,7 +75,7 @@ export function TaskProgressPanel({
         setCurrentTaskId(currentId || null);
       }
     } catch (error) {
-      console.error('Failed to load initial tasks:', error);
+      logger.error('Failed to load initial tasks:', error);
     } finally {
       setIsLoading(false);
     }

@@ -1,5 +1,8 @@
 import { useState, useCallback } from 'react';
+import { createLogger } from '@automaker/utils/logger';
 import { toast } from 'sonner';
+
+const logger = createLogger('CursorPermissions');
 import { getHttpApiClient } from '@/lib/http-api-client';
 import type { CursorPermissionProfile } from '@automaker/types';
 
@@ -41,7 +44,7 @@ export function useCursorPermissions(projectPath?: string) {
         });
       }
     } catch (error) {
-      console.error('Failed to load Cursor permissions:', error);
+      logger.error('Failed to load Cursor permissions:', error);
     } finally {
       setIsLoadingPermissions(false);
     }

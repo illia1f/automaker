@@ -4,6 +4,9 @@ import { useMessageQueue } from './use-message-queue';
 import type { ImageAttachment, TextFileAttachment } from '@/store/app-store';
 import { getElectronAPI } from '@/lib/electron';
 import { sanitizeFilename } from '@/lib/image-utils';
+import { createLogger } from '@automaker/utils/logger';
+
+const logger = createLogger('ElectronAgent');
 
 interface UseElectronAgentOptions {
   sessionId: string;
@@ -93,7 +96,7 @@ export function useElectronAgent({
       setError(null);
 
       try {
-        console.log('[useElectronAgent] Sending message directly', {
+        logger.info('Sending message directly', {
           hasImages: images && images.length > 0,
           imageCount: images?.length || 0,
           hasTextFiles: textFiles && textFiles.length > 0,
@@ -123,9 +126,9 @@ export function useElectronAgent({
             );
             if (result.success && result.path) {
               imagePaths.push(result.path);
-              console.log('[useElectronAgent] Saved image to .automaker/images:', result.path);
+              logger.info('Saved image to .automaker/images:', result.path);
             } else {
-              console.error('[useElectronAgent] Failed to save image:', result.error);
+              logger.error('Failed to save image:', result.error);
             }
           }
         }
@@ -146,7 +149,7 @@ export function useElectronAgent({
         // Note: We don't set isProcessing to false here because
         // it will be set by the "complete" or "error" stream event
       } catch (err) {
-        console.error('[useElectronAgent] Failed to send message:', err);
+        logger.error('Failed to send message:', err);
         setError(err instanceof Error ? err.message : 'Failed to send message');
         setIsProcessing(false);
         throw err;
@@ -191,13 +194,13 @@ export function useElectronAgent({
       setError(null);
 
       try {
-        console.log('[useElectronAgent] Starting session:', sessionId);
+        logger.info('Starting session:', sessionId);
         const result = await api.agent!.start(sessionId, workingDirectory);
 
         if (!mounted) return;
 
         if (result.success && result.messages) {
-          console.log('[useElectronAgent] Loaded', result.messages.length, 'messages');
+          logger.info('Loaded', result.messages.length, 'messages');
           setMessages(result.messages);
           setIsConnected(true);
 
@@ -205,7 +208,7 @@ export function useElectronAgent({
           const historyResult = await api.agent!.getHistory(sessionId);
           if (mounted && historyResult.success) {
             const isRunning = historyResult.isRunning || false;
-            console.log('[useElectronAgent] Session running state:', isRunning);
+            logger.info('Session running state:', isRunning);
             setIsProcessing(isRunning);
           }
         } else {
@@ -214,7 +217,7 @@ export function useElectronAgent({
         }
       } catch (err) {
         if (!mounted) return;
-        console.error('[useElectronAgent] Failed to initialize:', err);
+        logger.error('Failed to initialize:', err);
         setError(err instanceof Error ? err.message : 'Failed to initialize');
         setIsProcessing(false);
       }
@@ -230,7 +233,7 @@ export function useElectronAgent({
   // Auto-process queue when agent finishes processing
   useEffect(() => {
     if (!isProcessing && !isProcessingQueue && queuedMessages.length > 0) {
-      console.log('[useElectronAgent] Auto-processing next queued message');
+      logger.info('Auto-processing next queued message');
       processNext();
     }
   }, [isProcessing, isProcessingQueue, queuedMessages.length, processNext]);
@@ -241,21 +244,21 @@ export function useElectronAgent({
     if (!api?.agent) return;
     if (!sessionId) return; // Don't subscribe if no session
 
-    console.log('[useElectronAgent] Subscribing to stream events for session:', sessionId);
+    logger.info('Subscribing to stream events for session:', sessionId);
 
     const handleStream = (event: StreamEvent) => {
       // CRITICAL: Only process events for our specific session
       if (event.sessionId !== sessionId) {
-        console.log('[useElectronAgent] Ignoring event for different session:', event.sessionId);
+        logger.info('Ignoring event for different session:', event.sessionId);
         return;
       }
 
-      console.log('[useElectronAgent] Stream event for', sessionId, ':', event.type);
+      logger.info('Stream event for', sessionId, ':', event.type);
 
       switch (event.type) {
         case 'started':
           // Agent started processing (including from queue)
-          console.log('[useElectronAgent] Agent started processing for session:', sessionId);
+          logger.info('Agent started processing for session:', sessionId);
           setIsProcessing(true);
           break;
 
@@ -300,13 +303,13 @@ export function useElectronAgent({
 
         case 'tool_use':
           // Tool being used
-          console.log('[useElectronAgent] Tool use:', event.tool.name);
+          logger.info('Tool use:', event.tool.name);
           onToolUse?.(event.tool.name, event.tool.input);
           break;
 
         case 'complete':
           // Agent finished processing for THIS session
-          console.log('[useElectronAgent] Processing complete for session:', sessionId);
+          logger.info('Processing complete for session:', sessionId);
           setIsProcessing(false);
           if (event.messageId) {
             setMessages((prev) =>
@@ -319,7 +322,7 @@ export function useElectronAgent({
 
         case 'error':
           // Error occurred for THIS session
-          console.error('[useElectronAgent] Agent error for session:', sessionId, event.error);
+          logger.error('Agent error for session:', sessionId, event.error);
           setIsProcessing(false);
           setError(event.error);
           if (event.message) {
@@ -330,13 +333,13 @@ export function useElectronAgent({
 
         case 'queue_updated':
           // Server queue was updated
-          console.log('[useElectronAgent] Queue updated:', event.queue);
+          logger.info('Queue updated:', event.queue);
           setServerQueue(event.queue || []);
           break;
 
         case 'queue_error':
           // Error processing a queued prompt
-          console.error('[useElectronAgent] Queue error:', event.error);
+          logger.error('Queue error:', event.error);
           setError(event.error);
           break;
       }
@@ -346,7 +349,7 @@ export function useElectronAgent({
 
     return () => {
       if (unsubscribeRef.current) {
-        console.log('[useElectronAgent] Unsubscribing from stream events for session:', sessionId);
+        logger.info('Unsubscribing from stream events for session:', sessionId);
         unsubscribeRef.current();
         unsubscribeRef.current = null;
       }
@@ -363,7 +366,7 @@ export function useElectronAgent({
       }
 
       if (isProcessing) {
-        console.warn('[useElectronAgent] Already processing a message');
+        logger.warn('Already processing a message');
         return;
       }
 
@@ -371,7 +374,7 @@ export function useElectronAgent({
       setError(null);
 
       try {
-        console.log('[useElectronAgent] Sending message', {
+        logger.info('Sending message', {
           hasImages: images && images.length > 0,
           imageCount: images?.length || 0,
           hasTextFiles: textFiles && textFiles.length > 0,
@@ -401,9 +404,9 @@ export function useElectronAgent({
             );
             if (result.success && result.path) {
               imagePaths.push(result.path);
-              console.log('[useElectronAgent] Saved image to .automaker/images:', result.path);
+              logger.info('Saved image to .automaker/images:', result.path);
             } else {
-              console.error('[useElectronAgent] Failed to save image:', result.error);
+              logger.error('Failed to save image:', result.error);
             }
           }
         }
@@ -424,7 +427,7 @@ export function useElectronAgent({
         // Note: We don't set isProcessing to false here because
         // it will be set by the "complete" or "error" stream event
       } catch (err) {
-        console.error('[useElectronAgent] Failed to send message:', err);
+        logger.error('Failed to send message:', err);
         setError(err instanceof Error ? err.message : 'Failed to send message');
         setIsProcessing(false);
       }
@@ -441,7 +444,7 @@ export function useElectronAgent({
     }
 
     try {
-      console.log('[useElectronAgent] Stopping execution');
+      logger.info('Stopping execution');
       const result = await api.agent!.stop(sessionId);
 
       if (!result.success) {
@@ -450,7 +453,7 @@ export function useElectronAgent({
         setIsProcessing(false);
       }
     } catch (err) {
-      console.error('[useElectronAgent] Failed to stop:', err);
+      logger.error('Failed to stop:', err);
       setError(err instanceof Error ? err.message : 'Failed to stop execution');
     }
   }, [sessionId]);
@@ -464,7 +467,7 @@ export function useElectronAgent({
     }
 
     try {
-      console.log('[useElectronAgent] Clearing history');
+      logger.info('Clearing history');
       const result = await api.agent!.clear(sessionId);
 
       if (result.success) {
@@ -474,7 +477,7 @@ export function useElectronAgent({
         setError(result.error || 'Failed to clear history');
       }
     } catch (err) {
-      console.error('[useElectronAgent] Failed to clear:', err);
+      logger.error('Failed to clear:', err);
       setError(err instanceof Error ? err.message : 'Failed to clear history');
     }
   }, [sessionId]);
@@ -516,14 +519,14 @@ export function useElectronAgent({
           }
         }
 
-        console.log('[useElectronAgent] Adding to server queue');
+        logger.info('Adding to server queue');
         const result = await api.agent.queueAdd(sessionId, messageContent, imagePaths, model);
 
         if (!result.success) {
           setError(result.error || 'Failed to add to queue');
         }
       } catch (err) {
-        console.error('[useElectronAgent] Failed to add to queue:', err);
+        logger.error('Failed to add to queue:', err);
         setError(err instanceof Error ? err.message : 'Failed to add to queue');
       }
     },
@@ -540,14 +543,14 @@ export function useElectronAgent({
       }
 
       try {
-        console.log('[useElectronAgent] Removing from server queue:', promptId);
+        logger.info('Removing from server queue:', promptId);
         const result = await api.agent.queueRemove(sessionId, promptId);
 
         if (!result.success) {
           setError(result.error || 'Failed to remove from queue');
         }
       } catch (err) {
-        console.error('[useElectronAgent] Failed to remove from queue:', err);
+        logger.error('Failed to remove from queue:', err);
         setError(err instanceof Error ? err.message : 'Failed to remove from queue');
       }
     },
@@ -563,14 +566,14 @@ export function useElectronAgent({
     }
 
     try {
-      console.log('[useElectronAgent] Clearing server queue');
+      logger.info('Clearing server queue');
       const result = await api.agent.queueClear(sessionId);
 
       if (!result.success) {
         setError(result.error || 'Failed to clear queue');
       }
     } catch (err) {
-      console.error('[useElectronAgent] Failed to clear queue:', err);
+      logger.error('Failed to clear queue:', err);
       setError(err instanceof Error ? err.message : 'Failed to clear queue');
     }
   }, [sessionId]);

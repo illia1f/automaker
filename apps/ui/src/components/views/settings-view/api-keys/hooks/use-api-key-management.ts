@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
+import { createLogger } from '@automaker/utils/logger';
 import { useAppStore } from '@/store/app-store';
+
+const logger = createLogger('ApiKeyManagement');
 import { getElectronAPI } from '@/lib/electron';
 import type { ProviderConfigParams } from '@/config/api-providers';
 
@@ -60,7 +63,7 @@ export function useApiKeyManagement() {
             });
           }
         } catch (error) {
-          console.error('Failed to check API key status:', error);
+          logger.error('Failed to check API key status:', error);
         }
       }
     };

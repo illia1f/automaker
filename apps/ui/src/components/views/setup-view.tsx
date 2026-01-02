@@ -1,3 +1,4 @@
+import { createLogger } from '@automaker/utils/logger';
 import { useSetupStore } from '@/store/setup-store';
 import { StepIndicator } from './setup-view/components';
 import {
@@ -9,6 +10,8 @@ import {
   GitHubSetupStep,
 } from './setup-view/steps';
 import { useNavigate } from '@tanstack/react-router';
+
+const logger = createLogger('SetupView');
 
 // Main Setup View
 export function SetupView() {
@@ -28,33 +31,33 @@ export function SetupView() {
   const currentIndex = steps.indexOf(getStepName());
 
   const handleNext = (from: string) => {
-    console.log('[Setup Flow] handleNext called from:', from, 'currentStep:', currentStep);
+    logger.debug('[Setup Flow] handleNext called from:', from, 'currentStep:', currentStep);
     switch (from) {
       case 'welcome':
-        console.log('[Setup Flow] Moving to theme step');
+        logger.debug('[Setup Flow] Moving to theme step');
         setCurrentStep('theme');
         break;
       case 'theme':
-        console.log('[Setup Flow] Moving to claude_detect step');
+        logger.debug('[Setup Flow] Moving to claude_detect step');
         setCurrentStep('claude_detect');
         break;
       case 'claude':
-        console.log('[Setup Flow] Moving to cursor step');
+        logger.debug('[Setup Flow] Moving to cursor step');
         setCurrentStep('cursor');
         break;
       case 'cursor':
-        console.log('[Setup Flow] Moving to github step');
+        logger.debug('[Setup Flow] Moving to github step');
         setCurrentStep('github');
         break;
       case 'github':
-        console.log('[Setup Flow] Moving to complete step');
+        logger.debug('[Setup Flow] Moving to complete step');
         setCurrentStep('complete');
         break;
     }
   };
 
   const handleBack = (from: string) => {
-    console.log('[Setup Flow] handleBack called from:', from);
+    logger.debug('[Setup Flow] handleBack called from:', from);
     switch (from) {
       case 'theme':
         setCurrentStep('welcome');
@@ -72,25 +75,25 @@ export function SetupView() {
   };
 
   const handleSkipClaude = () => {
-    console.log('[Setup Flow] Skipping Claude setup');
+    logger.debug('[Setup Flow] Skipping Claude setup');
     setSkipClaudeSetup(true);
     setCurrentStep('cursor');
   };
 
   const handleSkipCursor = () => {
-    console.log('[Setup Flow] Skipping Cursor setup');
+    logger.debug('[Setup Flow] Skipping Cursor setup');
     setCurrentStep('github');
   };
 
   const handleSkipGithub = () => {
-    console.log('[Setup Flow] Skipping GitHub setup');
+    logger.debug('[Setup Flow] Skipping GitHub setup');
     setCurrentStep('complete');
   };
 
   const handleFinish = () => {
-    console.log('[Setup Flow] handleFinish called - completing setup');
+    logger.debug('[Setup Flow] handleFinish called - completing setup');
     completeSetup();
-    console.log('[Setup Flow] Setup completed, redirecting to welcome view');
+    logger.debug('[Setup Flow] Setup completed, redirecting to welcome view');
     navigate({ to: '/' });
   };
 

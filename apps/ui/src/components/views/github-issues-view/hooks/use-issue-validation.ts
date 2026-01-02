@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { createLogger } from '@automaker/utils/logger';
 import {
   getElectronAPI,
   GitHubIssue,
@@ -11,6 +12,8 @@ import type { LinkedPRInfo, PhaseModelEntry, ModelAlias, CursorModelId } from '@
 import { useAppStore } from '@/store/app-store';
 import { toast } from 'sonner';
 import { isValidationStale } from '../utils';
+
+const logger = createLogger('IssueValidation');
 
 /**
  * Extract model string from PhaseModelEntry or string (handles both formats)
@@ -78,7 +81,7 @@ export function useIssueValidation({
         }
       } catch (err) {
         if (isMounted) {
-          console.error('[GitHubIssuesView] Failed to load cached validations:', err);
+          logger.error('Failed to load cached validations:', err);
         }
       }
     };
@@ -107,7 +110,7 @@ export function useIssueValidation({
         }
       } catch (err) {
         if (isMounted) {
-          console.error('[GitHubIssuesView] Failed to load running validations:', err);
+          logger.error('Failed to load running validations:', err);
         }
       }
     };
@@ -283,7 +286,7 @@ export function useIssueValidation({
           // On success, the result will come through the event stream
         }
       } catch (err) {
-        console.error('[GitHubIssuesView] Validation error:', err);
+        logger.error('Validation error:', err);
         toast.error(err instanceof Error ? err.message : 'Failed to validate issue');
       }
     },
@@ -325,7 +328,7 @@ export function useIssueValidation({
               });
             }
           } catch (err) {
-            console.error('[GitHubIssuesView] Failed to mark validation as viewed:', err);
+            logger.error('Failed to mark validation as viewed:', err);
           }
         }
       }

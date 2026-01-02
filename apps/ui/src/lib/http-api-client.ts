@@ -5,6 +5,7 @@
  * but communicates with the backend server via HTTP/WebSocket.
  */
 
+import { createLogger } from '@automaker/utils/logger';
 import type {
   ElectronAPI,
   FileResult,
@@ -32,6 +33,8 @@ import type { Feature, ClaudeUsageResponse } from '@/store/app-store';
 import type { WorktreeAPI, GitAPI, ModelDefinition, ProviderStatus } from '@/types/electron';
 import { getGlobalFileBrowser } from '@/contexts/file-browser-context';
 
+const logger = createLogger('HttpClient');
+
 // Cached server URL (set during initialization in Electron mode)
 let cachedServerUrl: string | null = null;
 
@@ -46,9 +49,9 @@ export const initServerUrl = async (): Promise<void> => {
   if (electron?.getServerUrl) {
     try {
       cachedServerUrl = await electron.getServerUrl();
-      console.log('[HTTP Client] Server URL from Electron:', cachedServerUrl);
+      logger.info('Server URL from Electron:', cachedServerUrl);
     } catch (error) {
-      console.warn('[HTTP Client] Failed to get server URL from Electron:', error);
+      logger.warn('Failed to get server URL from Electron:', error);
     }
   }
 };
@@ -145,16 +148,16 @@ export const initApiKey = async (): Promise<void> => {
         try {
           cachedApiKey = await window.electronAPI.getApiKey();
           if (cachedApiKey) {
-            console.log('[HTTP Client] Using API key from Electron');
+            logger.info('Using API key from Electron');
             return;
           }
         } catch (error) {
-          console.warn('[HTTP Client] Failed to get API key from Electron:', error);
+          logger.warn('Failed to get API key from Electron:', error);
         }
       }
 
       // In web mode, authentication is handled via HTTP-only cookies
-      console.log('[HTTP Client] Web mode - using cookie-based authentication');
+      logger.info('Web mode - using cookie-based authentication');
     } finally {
       // Mark as initialized after completion, regardless of success or failure
       apiKeyInitialized = true;
@@ -182,7 +185,7 @@ export const checkAuthStatus = async (): Promise<{
       required: data.required ?? true,
     };
   } catch (error) {
-    console.error('[HTTP Client] Failed to check auth status:', error);
+    logger.error('Failed to check auth status:', error);
     return { authenticated: false, required: true };
   }
 };
@@ -207,23 +210,23 @@ export const login = async (
     // Store the session token if login succeeded
     if (data.success && data.token) {
       setSessionToken(data.token);
-      console.log('[HTTP Client] Session token stored after login');
+      logger.info('Session token stored after login');
 
       // Verify the session is actually working by making a request to an authenticated endpoint
       const verified = await verifySession();
       if (!verified) {
-        console.error('[HTTP Client] Login appeared successful but session verification failed');
+        logger.error('Login appeared successful but session verification failed');
         return {
           success: false,
           error: 'Session verification failed. Please try again.',
         };
       }
-      console.log('[HTTP Client] Login verified successfully');
+      logger.info('Login verified successfully');
     }
 
     return data;
   } catch (error) {
-    console.error('[HTTP Client] Login failed:', error);
+    logger.error('Login failed:', error);
     return { success: false, error: 'Network error' };
   }
 };
@@ -243,20 +246,20 @@ export const fetchSessionToken = async (): Promise<boolean> => {
     });
 
     if (!response.ok) {
-      console.log('[HTTP Client] Failed to check auth status');
+      logger.info('Failed to check auth status');
       return false;
     }
 
     const data = await response.json();
     if (data.success && data.authenticated) {
-      console.log('[HTTP Client] Session cookie is valid');
+      logger.info('Session cookie is valid');
       return true;
     }
 
-    console.log('[HTTP Client] Session cookie is not authenticated');
+    logger.info('Session cookie is not authenticated');
     return false;
   } catch (error) {
-    console.error('[HTTP Client] Failed to check session:', error);
+    logger.error('Failed to check session:', error);
     return false;
   }
 };
@@ -273,11 +276,11 @@ export const logout = async (): Promise<{ success: boolean }> => {
 
     // Clear the cached session token
     clearSessionToken();
-    console.log('[HTTP Client] Session token cleared on logout');
+    logger.info('Session token cleared on logout');
 
     return await response.json();
   } catch (error) {
-    console.error('[HTTP Client] Logout failed:', error);
+    logger.error('Logout failed:', error);
     return { success: false };
   }
 };
@@ -310,7 +313,7 @@ export const verifySession = async (): Promise<boolean> => {
 
     // Check for authentication errors
     if (response.status === 401 || response.status === 403) {
-      console.warn('[HTTP Client] Session verification failed - session expired or invalid');
+      logger.warn('Session verification failed - session expired or invalid');
       // Clear the session since it's no longer valid
       clearSessionToken();
       // Try to clear the cookie via logout (fire and forget)
@@ -324,14 +327,14 @@ export const verifySession = async (): Promise<boolean> => {
     }
 
     if (!response.ok) {
-      console.warn('[HTTP Client] Session verification failed with status:', response.status);
+      logger.warn('Session verification failed with status:', response.status);
       return false;
     }
 
-    console.log('[HTTP Client] Session verified successfully');
+    logger.info('Session verified successfully');
     return true;
   } catch (error) {
-    console.error('[HTTP Client] Session verification error:', error);
+    logger.error('Session verification error:', error);
     return false;
   }
 };
@@ -350,14 +353,14 @@ export const checkSandboxEnvironment = async (): Promise<{
     });
 
     if (!response.ok) {
-      console.warn('[HTTP Client] Failed to check sandbox environment');
+      logger.warn('Failed to check sandbox environment');
       return { isContainerized: false, error: 'Failed to check environment' };
     }
 
     const data = await response.json();
     return { isContainerized: data.isContainerized ?? false };
   } catch (error) {
-    console.error('[HTTP Client] Sandbox environment check failed:', error);
+    logger.error('Sandbox environment check failed:', error);
     return { isContainerized: false, error: 'Network error' };
   }
 };
@@ -399,7 +402,7 @@ export class HttpApiClient implements ElectronAPI {
           this.connectWebSocket();
         })
         .catch((error) => {
-          console.error('[HttpApiClient] API key initialization failed:', error);
+          logger.error('API key initialization failed:', error);
           // Still attempt WebSocket connection - it may work with cookie auth
           this.connectWebSocket();
         });
@@ -428,7 +431,7 @@ export class HttpApiClient implements ElectronAPI {
       });
 
       if (!response.ok) {
-        console.warn('[HttpApiClient] Failed to fetch wsToken:', response.status);
+        logger.warn('Failed to fetch wsToken:', response.status);
         return null;
       }
 
@@ -439,7 +442,7 @@ export class HttpApiClient implements ElectronAPI {
 
       return null;
     } catch (error) {
-      console.error('[HttpApiClient] Error fetching wsToken:', error);
+      logger.error('Error fetching wsToken:', error);
       return null;
     }
   }
@@ -456,9 +459,7 @@ export class HttpApiClient implements ElectronAPI {
     if (isElectronMode()) {
       const apiKey = getApiKey();
       if (!apiKey) {
-        console.warn(
-          '[HttpApiClient] Electron mode: API key not ready, delaying WebSocket connect'
-        );
+        logger.warn('Electron mode: API key not ready, delaying WebSocket connect');
         this.isConnecting = false;
         if (!this.reconnectTimer) {
           this.reconnectTimer = setTimeout(() => {
@@ -482,12 +483,12 @@ export class HttpApiClient implements ElectronAPI {
           this.establishWebSocket(`${wsUrl}?wsToken=${encodeURIComponent(wsToken)}`);
         } else {
           // Fallback: try connecting without token (will fail if not authenticated)
-          console.warn('[HttpApiClient] No wsToken available, attempting connection anyway');
+          logger.warn('No wsToken available, attempting connection anyway');
           this.establishWebSocket(wsUrl);
         }
       })
       .catch((error) => {
-        console.error('[HttpApiClient] Failed to prepare WebSocket connection:', error);
+        logger.error('Failed to prepare WebSocket connection:', error);
         this.isConnecting = false;
       });
   }
@@ -500,7 +501,7 @@ export class HttpApiClient implements ElectronAPI {
       this.ws = new WebSocket(wsUrl);
 
       this.ws.onopen = () => {
-        console.log('[HttpApiClient] WebSocket connected');
+        logger.info('WebSocket connected');
         this.isConnecting = false;
         if (this.reconnectTimer) {
           clearTimeout(this.reconnectTimer);
@@ -511,8 +512,8 @@ export class HttpApiClient implements ElectronAPI {
       this.ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          console.log(
-            '[HttpApiClient] WebSocket message:',
+          logger.info(
+            'WebSocket message:',
             data.type,
             'hasPayload:',
             !!data.payload,
@@ -521,16 +522,16 @@ export class HttpApiClient implements ElectronAPI {
           );
           const callbacks = this.eventCallbacks.get(data.type);
           if (callbacks) {
-            console.log('[HttpApiClient] Dispatching to', callbacks.size, 'callbacks');
+            logger.info('Dispatching to', callbacks.size, 'callbacks');
             callbacks.forEach((cb) => cb(data.payload));
           }
         } catch (error) {
-          console.error('[HttpApiClient] Failed to parse WebSocket message:', error);
+          logger.error('Failed to parse WebSocket message:', error);
         }
       };
 
       this.ws.onclose = () => {
-        console.log('[HttpApiClient] WebSocket disconnected');
+        logger.info('WebSocket disconnected');
         this.isConnecting = false;
         this.ws = null;
         // Attempt to reconnect after 5 seconds
@@ -543,11 +544,11 @@ export class HttpApiClient implements ElectronAPI {
       };
 
       this.ws.onerror = (error) => {
-        console.error('[HttpApiClient] WebSocket error:', error);
+        logger.error('WebSocket error:', error);
         this.isConnecting = false;
       };
     } catch (error) {
-      console.error('[HttpApiClient] Failed to create WebSocket:', error);
+      logger.error('Failed to create WebSocket:', error);
       this.isConnecting = false;
     }
   }
@@ -747,7 +748,7 @@ export class HttpApiClient implements ElectronAPI {
     const fileBrowser = getGlobalFileBrowser();
 
     if (!fileBrowser) {
-      console.error('File browser not initialized');
+      logger.error('File browser not initialized');
       return { canceled: true, filePaths: [] };
     }
 
@@ -769,7 +770,7 @@ export class HttpApiClient implements ElectronAPI {
       return { canceled: false, filePaths: [result.path] };
     }
 
-    console.error('Invalid directory:', result.error || 'Path not allowed');
+    logger.error('Invalid directory:', result.error || 'Path not allowed');
     return { canceled: true, filePaths: [] };
   }
 
@@ -777,7 +778,7 @@ export class HttpApiClient implements ElectronAPI {
     const fileBrowser = getGlobalFileBrowser();
 
     if (!fileBrowser) {
-      console.error('File browser not initialized');
+      logger.error('File browser not initialized');
       return { canceled: true, filePaths: [] };
     }
 
@@ -796,7 +797,7 @@ export class HttpApiClient implements ElectronAPI {
       return { canceled: false, filePaths: [path] };
     }
 
-    console.error('File not found');
+    logger.error('File not found');
     return { canceled: true, filePaths: [] };
   }
 
@@ -1910,5 +1911,5 @@ export function getHttpApiClient(): HttpApiClient {
 // This ensures the init promise is created early, even before React components mount
 // The actual async work happens in the background and won't block module loading
 initApiKey().catch((error) => {
-  console.error('[HTTP Client] Failed to initialize API key:', error);
+  logger.error('Failed to initialize API key:', error);
 });

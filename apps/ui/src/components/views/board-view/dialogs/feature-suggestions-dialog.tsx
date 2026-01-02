@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { createLogger } from '@automaker/utils/logger';
 import {
   Dialog,
   DialogContent,
@@ -33,6 +34,8 @@ import {
 import { useAppStore, Feature } from '@/store/app-store';
 import { toast } from 'sonner';
 import { LogViewer } from '@/components/ui/log-viewer';
+
+const logger = createLogger('FeatureSuggestions');
 
 interface FeatureSuggestionsDialogProps {
   open: boolean;
@@ -176,7 +179,7 @@ export function FeatureSuggestionsDialog({
           setIsGenerating(false);
         }
       } catch (error) {
-        console.error('Failed to generate suggestions:', error);
+        logger.error('Failed to generate suggestions:', error);
         toast.error('Failed to start generation');
         setIsGenerating(false);
       }
@@ -194,7 +197,7 @@ export function FeatureSuggestionsDialog({
       setIsGenerating(false);
       toast.info('Generation stopped');
     } catch (error) {
-      console.error('Failed to stop generation:', error);
+      logger.error('Failed to stop generation:', error);
     }
   }, [setIsGenerating]);
 
@@ -280,7 +283,7 @@ export function FeatureSuggestionsDialog({
 
       onClose();
     } catch (error) {
-      console.error('Failed to import features:', error);
+      logger.error('Failed to import features:', error);
       toast.error('Failed to import features');
     } finally {
       setIsImporting(false);

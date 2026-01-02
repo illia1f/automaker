@@ -1,4 +1,5 @@
 // Type definitions for Electron IPC API
+import { createLogger } from '@automaker/utils/logger';
 import type { SessionListItem, Message } from '@/types/electron';
 import type { ClaudeUsageResponse } from '@/store/app-store';
 import type {
@@ -93,6 +94,8 @@ import type {
   ModelDefinition,
   ProviderStatus,
 } from '@/types/electron';
+
+const logger = createLogger('Electron');
 
 // Import HTTP API client (ES module)
 import { getHttpApiClient, getServerUrlSync } from './http-api-client';
@@ -774,8 +777,8 @@ export const getCurrentApiMode = (): 'http' => {
 // Debug helpers
 if (typeof window !== 'undefined') {
   (window as any).__checkApiMode = () => {
-    console.log('Current API mode:', getCurrentApiMode());
-    console.log('isElectron():', isElectron());
+    logger.info('Current API mode:', getCurrentApiMode());
+    logger.info('isElectron():', isElectron());
   };
 }
 
@@ -1016,7 +1019,7 @@ const getMockElectronAPI = (): ElectronAPI => {
       // Store the image data in mock file system for testing
       mockFileSystem[tempFilePath] = data;
 
-      console.log('[Mock] Saved image to temp:', tempFilePath);
+      logger.info('Mock saved image to temp:', tempFilePath);
       return { success: true, path: tempFilePath };
     },
 
@@ -1061,7 +1064,7 @@ const getMockElectronAPI = (): ElectronAPI => {
     // Mock Claude API
     claude: {
       getUsage: async () => {
-        console.log('[Mock] Getting Claude usage');
+        logger.info('Mock getting Claude usage');
         return {
           sessionTokensUsed: 0,
           sessionLimit: 0,
@@ -1168,7 +1171,7 @@ interface SetupAPI {
 function createMockSetupAPI(): SetupAPI {
   return {
     getClaudeStatus: async () => {
-      console.log('[Mock] Getting Claude status');
+      logger.info('Mock Getting Claude status');
       return {
         success: true,
         status: 'not_installed',
@@ -1185,7 +1188,7 @@ function createMockSetupAPI(): SetupAPI {
     },
 
     installClaude: async () => {
-      console.log('[Mock] Installing Claude CLI');
+      logger.info('Mock Installing Claude CLI');
       // Simulate installation delay
       await new Promise((resolve) => setTimeout(resolve, 1000));
       return {
@@ -1196,7 +1199,7 @@ function createMockSetupAPI(): SetupAPI {
     },
 
     authClaude: async () => {
-      console.log('[Mock] Auth Claude CLI');
+      logger.info('Mock Auth Claude CLI');
       return {
         success: true,
         requiresManualAuth: true,
@@ -1205,13 +1208,13 @@ function createMockSetupAPI(): SetupAPI {
     },
 
     storeApiKey: async (provider: string, apiKey: string) => {
-      console.log('[Mock] Storing API key for:', provider);
+      logger.info('Mock Storing API key for:', provider);
       // In mock mode, we just pretend to store it (it's already in the app store)
       return { success: true };
     },
 
     getApiKeys: async () => {
-      console.log('[Mock] Getting API keys');
+      logger.info('Mock Getting API keys');
       return {
         success: true,
         hasAnthropicKey: false,
@@ -1220,7 +1223,7 @@ function createMockSetupAPI(): SetupAPI {
     },
 
     deleteApiKey: async (provider: string) => {
-      console.log('[Mock] Deleting API key for:', provider);
+      logger.info('Mock Deleting API key for:', provider);
       return { success: true, message: `API key for ${provider} deleted` };
     },
 
@@ -1237,8 +1240,8 @@ function createMockSetupAPI(): SetupAPI {
     },
 
     verifyClaudeAuth: async (authMethod?: 'cli' | 'api_key', apiKey?: string) => {
-      console.log(
-        '[Mock] Verifying Claude auth with method:',
+      logger.info(
+        'Mock verifying Claude auth with method:',
         authMethod,
         apiKey ? '(with key)' : ''
       );
@@ -1251,7 +1254,7 @@ function createMockSetupAPI(): SetupAPI {
     },
 
     getGhStatus: async () => {
-      console.log('[Mock] Getting GitHub CLI status');
+      logger.info('Mock Getting GitHub CLI status');
       return {
         success: true,
         installed: false,
@@ -1278,7 +1281,7 @@ function createMockSetupAPI(): SetupAPI {
 function createMockWorktreeAPI(): WorktreeAPI {
   return {
     mergeFeature: async (projectPath: string, featureId: string, options?: object) => {
-      console.log('[Mock] Merging feature:', {
+      logger.info('Mock Merging feature:', {
         projectPath,
         featureId,
         options,
@@ -1287,7 +1290,7 @@ function createMockWorktreeAPI(): WorktreeAPI {
     },
 
     getInfo: async (projectPath: string, featureId: string) => {
-      console.log('[Mock] Getting worktree info:', { projectPath, featureId });
+      logger.info('Mock Getting worktree info:', { projectPath, featureId });
       return {
         success: true,
         worktreePath: `/mock/worktrees/${featureId}`,
@@ -1297,7 +1300,7 @@ function createMockWorktreeAPI(): WorktreeAPI {
     },
 
     getStatus: async (projectPath: string, featureId: string) => {
-      console.log('[Mock] Getting worktree status:', {
+      logger.info('Mock Getting worktree status:', {
         projectPath,
         featureId,
       });
@@ -1311,12 +1314,12 @@ function createMockWorktreeAPI(): WorktreeAPI {
     },
 
     list: async (projectPath: string) => {
-      console.log('[Mock] Listing worktrees:', { projectPath });
+      logger.info('Mock Listing worktrees:', { projectPath });
       return { success: true, worktrees: [] };
     },
 
     listAll: async (projectPath: string, includeDetails?: boolean) => {
-      console.log('[Mock] Listing all worktrees:', {
+      logger.info('Mock Listing all worktrees:', {
         projectPath,
         includeDetails,
       });
@@ -1337,7 +1340,7 @@ function createMockWorktreeAPI(): WorktreeAPI {
     },
 
     create: async (projectPath: string, branchName: string, baseBranch?: string) => {
-      console.log('[Mock] Creating worktree:', {
+      logger.info('Mock Creating worktree:', {
         projectPath,
         branchName,
         baseBranch,
@@ -1353,7 +1356,7 @@ function createMockWorktreeAPI(): WorktreeAPI {
     },
 
     delete: async (projectPath: string, worktreePath: string, deleteBranch?: boolean) => {
-      console.log('[Mock] Deleting worktree:', {
+      logger.info('Mock Deleting worktree:', {
         projectPath,
         worktreePath,
         deleteBranch,
@@ -1368,7 +1371,7 @@ function createMockWorktreeAPI(): WorktreeAPI {
     },
 
     commit: async (worktreePath: string, message: string) => {
-      console.log('[Mock] Committing changes:', { worktreePath, message });
+      logger.info('Mock Committing changes:', { worktreePath, message });
       return {
         success: true,
         result: {
@@ -1381,7 +1384,7 @@ function createMockWorktreeAPI(): WorktreeAPI {
     },
 
     push: async (worktreePath: string, force?: boolean) => {
-      console.log('[Mock] Pushing worktree:', { worktreePath, force });
+      logger.info('Mock Pushing worktree:', { worktreePath, force });
       return {
         success: true,
         result: {
@@ -1393,7 +1396,7 @@ function createMockWorktreeAPI(): WorktreeAPI {
     },
 
     createPR: async (worktreePath: string, options?: any) => {
-      console.log('[Mock] Creating PR:', { worktreePath, options });
+      logger.info('Mock Creating PR:', { worktreePath, options });
       return {
         success: true,
         result: {
@@ -1408,7 +1411,7 @@ function createMockWorktreeAPI(): WorktreeAPI {
     },
 
     getDiffs: async (projectPath: string, featureId: string) => {
-      console.log('[Mock] Getting file diffs:', { projectPath, featureId });
+      logger.info('Mock Getting file diffs:', { projectPath, featureId });
       return {
         success: true,
         diff: "diff --git a/src/feature.ts b/src/feature.ts\n+++ new file\n@@ -0,0 +1,10 @@\n+export function feature() {\n+  return 'hello';\n+}",
@@ -1421,7 +1424,7 @@ function createMockWorktreeAPI(): WorktreeAPI {
     },
 
     getFileDiff: async (projectPath: string, featureId: string, filePath: string) => {
-      console.log('[Mock] Getting file diff:', {
+      logger.info('Mock Getting file diff:', {
         projectPath,
         featureId,
         filePath,
@@ -1434,7 +1437,7 @@ function createMockWorktreeAPI(): WorktreeAPI {
     },
 
     pull: async (worktreePath: string) => {
-      console.log('[Mock] Pulling latest changes for:', worktreePath);
+      logger.info('Mock Pulling latest changes for:', worktreePath);
       return {
         success: true,
         result: {
@@ -1446,7 +1449,7 @@ function createMockWorktreeAPI(): WorktreeAPI {
     },
 
     checkoutBranch: async (worktreePath: string, branchName: string) => {
-      console.log('[Mock] Creating and checking out branch:', {
+      logger.info('Mock Creating and checking out branch:', {
         worktreePath,
         branchName,
       });
@@ -1461,7 +1464,7 @@ function createMockWorktreeAPI(): WorktreeAPI {
     },
 
     listBranches: async (worktreePath: string) => {
-      console.log('[Mock] Listing branches for:', worktreePath);
+      logger.info('Mock Listing branches for:', worktreePath);
       return {
         success: true,
         result: {
@@ -1478,7 +1481,7 @@ function createMockWorktreeAPI(): WorktreeAPI {
     },
 
     switchBranch: async (worktreePath: string, branchName: string) => {
-      console.log('[Mock] Switching to branch:', { worktreePath, branchName });
+      logger.info('Mock Switching to branch:', { worktreePath, branchName });
       return {
         success: true,
         result: {
@@ -1490,7 +1493,7 @@ function createMockWorktreeAPI(): WorktreeAPI {
     },
 
     openInEditor: async (worktreePath: string) => {
-      console.log('[Mock] Opening in editor:', worktreePath);
+      logger.info('Mock Opening in editor:', worktreePath);
       return {
         success: true,
         result: {
@@ -1501,7 +1504,7 @@ function createMockWorktreeAPI(): WorktreeAPI {
     },
 
     getDefaultEditor: async () => {
-      console.log('[Mock] Getting default editor');
+      logger.info('Mock Getting default editor');
       return {
         success: true,
         result: {
@@ -1512,7 +1515,7 @@ function createMockWorktreeAPI(): WorktreeAPI {
     },
 
     initGit: async (projectPath: string) => {
-      console.log('[Mock] Initializing git:', projectPath);
+      logger.info('Mock Initializing git:', projectPath);
       return {
         success: true,
         result: {
@@ -1523,7 +1526,7 @@ function createMockWorktreeAPI(): WorktreeAPI {
     },
 
     startDevServer: async (projectPath: string, worktreePath: string) => {
-      console.log('[Mock] Starting dev server:', { projectPath, worktreePath });
+      logger.info('Mock Starting dev server:', { projectPath, worktreePath });
       return {
         success: true,
         result: {
@@ -1536,7 +1539,7 @@ function createMockWorktreeAPI(): WorktreeAPI {
     },
 
     stopDevServer: async (worktreePath: string) => {
-      console.log('[Mock] Stopping dev server:', worktreePath);
+      logger.info('Mock Stopping dev server:', worktreePath);
       return {
         success: true,
         result: {
@@ -1547,7 +1550,7 @@ function createMockWorktreeAPI(): WorktreeAPI {
     },
 
     listDevServers: async () => {
-      console.log('[Mock] Listing dev servers');
+      logger.info('Mock Listing dev servers');
       return {
         success: true,
         result: {
@@ -1557,7 +1560,7 @@ function createMockWorktreeAPI(): WorktreeAPI {
     },
 
     getPRInfo: async (worktreePath: string, branchName: string) => {
-      console.log('[Mock] Getting PR info:', { worktreePath, branchName });
+      logger.info('Mock Getting PR info:', { worktreePath, branchName });
       return {
         success: true,
         result: {
@@ -1573,7 +1576,7 @@ function createMockWorktreeAPI(): WorktreeAPI {
 function createMockGitAPI(): GitAPI {
   return {
     getDiffs: async (projectPath: string) => {
-      console.log('[Mock] Getting git diffs for project:', { projectPath });
+      logger.info('Mock Getting git diffs for project:', { projectPath });
       return {
         success: true,
         diff: "diff --git a/src/feature.ts b/src/feature.ts\n+++ new file\n@@ -0,0 +1,10 @@\n+export function feature() {\n+  return 'hello';\n+}",
@@ -1586,7 +1589,7 @@ function createMockGitAPI(): GitAPI {
     },
 
     getFileDiff: async (projectPath: string, filePath: string) => {
-      console.log('[Mock] Getting git file diff:', { projectPath, filePath });
+      logger.info('Mock Getting git file diff:', { projectPath, filePath });
       return {
         success: true,
         diff: `diff --git a/${filePath} b/${filePath}\n+++ new file\n@@ -0,0 +1,5 @@\n+// New content`,
@@ -1610,7 +1613,7 @@ function createMockAutoModeAPI(): AutoModeAPI {
       }
 
       mockAutoModeRunning = true;
-      console.log(`[Mock] Auto mode started with maxConcurrency: ${maxConcurrency || 3}`);
+      logger.info(`Mock auto mode started with maxConcurrency: ${maxConcurrency || 3}`);
       const featureId = 'auto-mode-0';
       mockRunningFeatures.add(featureId);
 
@@ -1679,8 +1682,8 @@ function createMockAutoModeAPI(): AutoModeAPI {
         };
       }
 
-      console.log(
-        `[Mock] Running feature ${featureId} with useWorktrees: ${useWorktrees}, worktreePath: ${worktreePath}`
+      logger.info(
+        `Mock running feature ${featureId} with useWorktrees: ${useWorktrees}, worktreePath: ${worktreePath}`
       );
       mockRunningFeatures.add(featureId);
       simulateAutoModeLoop(projectPath, featureId);
@@ -1847,7 +1850,7 @@ function createMockAutoModeAPI(): AutoModeAPI {
         };
       }
 
-      console.log('[Mock] Follow-up feature:', {
+      logger.info('Mock Follow-up feature:', {
         featureId,
         prompt,
         imagePaths,
@@ -1864,7 +1867,7 @@ function createMockAutoModeAPI(): AutoModeAPI {
     },
 
     commitFeature: async (projectPath: string, featureId: string, worktreePath?: string) => {
-      console.log('[Mock] Committing feature:', {
+      logger.info('Mock Committing feature:', {
         projectPath,
         featureId,
         worktreePath,
@@ -1909,7 +1912,7 @@ function createMockAutoModeAPI(): AutoModeAPI {
       editedPlan?: string,
       feedback?: string
     ) => {
-      console.log('[Mock] Plan approval:', {
+      logger.info('Mock Plan approval:', {
         projectPath,
         featureId,
         approved,
@@ -2070,7 +2073,7 @@ function createMockSuggestionsAPI(): SuggestionsAPI {
       }
 
       mockSuggestionsRunning = true;
-      console.log(`[Mock] Generating ${suggestionType} suggestions for: ${projectPath}`);
+      logger.info(`Mock generating ${suggestionType} suggestions for: ${projectPath}`);
 
       // Simulate async suggestion generation
       simulateSuggestionsGeneration(suggestionType);
@@ -2294,8 +2297,8 @@ function createMockSpecRegenerationAPI(): SpecRegenerationAPI {
       }
 
       mockSpecRegenerationRunning = true;
-      console.log(
-        `[Mock] Creating initial spec for: ${projectPath}, generateFeatures: ${generateFeatures}, maxFeatures: ${maxFeatures}`
+      logger.info(
+        `Mock creating initial spec for: ${projectPath}, generateFeatures: ${generateFeatures}, maxFeatures: ${maxFeatures}`
       );
 
       // Simulate async spec creation
@@ -2319,8 +2322,8 @@ function createMockSpecRegenerationAPI(): SpecRegenerationAPI {
       }
 
       mockSpecRegenerationRunning = true;
-      console.log(
-        `[Mock] Regenerating spec for: ${projectPath}, generateFeatures: ${generateFeatures}, maxFeatures: ${maxFeatures}`
+      logger.info(
+        `Mock regenerating spec for: ${projectPath}, generateFeatures: ${generateFeatures}, maxFeatures: ${maxFeatures}`
       );
 
       // Simulate async spec regeneration
@@ -2338,8 +2341,8 @@ function createMockSpecRegenerationAPI(): SpecRegenerationAPI {
       }
 
       mockSpecRegenerationRunning = true;
-      console.log(
-        `[Mock] Generating features from existing spec for: ${projectPath}, maxFeatures: ${maxFeatures}`
+      logger.info(
+        `Mock generating features from existing spec for: ${projectPath}, maxFeatures: ${maxFeatures}`
       );
 
       // Simulate async feature generation
@@ -2604,7 +2607,7 @@ function createMockFeaturesAPI(): FeaturesAPI {
   // Store features in mock file system using features/{id}/feature.json pattern
   return {
     getAll: async (projectPath: string) => {
-      console.log('[Mock] Getting all features for:', projectPath);
+      logger.info('Mock Getting all features for:', projectPath);
 
       // Check if test has set mock features via global variable
       const testFeatures = (window as any).__mockFeatures;
@@ -2629,7 +2632,7 @@ function createMockFeaturesAPI(): FeaturesAPI {
             features.push(feature);
           }
         } catch (error) {
-          console.error('[Mock] Failed to parse feature:', error);
+          logger.error('Mock Failed to parse feature:', error);
         }
       }
 
@@ -2642,7 +2645,7 @@ function createMockFeaturesAPI(): FeaturesAPI {
     },
 
     get: async (projectPath: string, featureId: string) => {
-      console.log('[Mock] Getting feature:', { projectPath, featureId });
+      logger.info('Mock Getting feature:', { projectPath, featureId });
       const featurePath = `${projectPath}/.automaker/features/${featureId}/feature.json`;
       const content = mockFileSystem[featurePath];
       if (content) {
@@ -2652,7 +2655,7 @@ function createMockFeaturesAPI(): FeaturesAPI {
     },
 
     create: async (projectPath: string, feature: Feature) => {
-      console.log('[Mock] Creating feature:', {
+      logger.info('Mock Creating feature:', {
         projectPath,
         featureId: feature.id,
       });
@@ -2662,7 +2665,7 @@ function createMockFeaturesAPI(): FeaturesAPI {
     },
 
     update: async (projectPath: string, featureId: string, updates: Partial<Feature>) => {
-      console.log('[Mock] Updating feature:', {
+      logger.info('Mock Updating feature:', {
         projectPath,
         featureId,
         updates,
@@ -2678,7 +2681,7 @@ function createMockFeaturesAPI(): FeaturesAPI {
     },
 
     delete: async (projectPath: string, featureId: string) => {
-      console.log('[Mock] Deleting feature:', { projectPath, featureId });
+      logger.info('Mock Deleting feature:', { projectPath, featureId });
       const featurePath = `${projectPath}/.automaker/features/${featureId}/feature.json`;
       delete mockFileSystem[featurePath];
       // Also delete agent-output.md if it exists
@@ -2688,14 +2691,14 @@ function createMockFeaturesAPI(): FeaturesAPI {
     },
 
     getAgentOutput: async (projectPath: string, featureId: string) => {
-      console.log('[Mock] Getting agent output:', { projectPath, featureId });
+      logger.info('Mock Getting agent output:', { projectPath, featureId });
       const agentOutputPath = `${projectPath}/.automaker/features/${featureId}/agent-output.md`;
       const content = mockFileSystem[agentOutputPath];
       return { success: true, content: content || null };
     },
 
     generateTitle: async (description: string) => {
-      console.log('[Mock] Generating title for:', description.substring(0, 50));
+      logger.info('Mock Generating title for:', description.substring(0, 50));
       // Mock title generation - just take first few words
       const words = description.split(/\s+/).slice(0, 6).join(' ');
       const title = words.length > 40 ? words.substring(0, 40) + '...' : words;
@@ -2708,7 +2711,7 @@ function createMockFeaturesAPI(): FeaturesAPI {
 function createMockRunningAgentsAPI(): RunningAgentsAPI {
   return {
     getAll: async () => {
-      console.log('[Mock] Getting all running agents');
+      logger.info('Mock Getting all running agents');
       // Return running agents from mock auto mode state
       const runningAgents: RunningAgent[] = Array.from(mockRunningFeatures).map((featureId) => ({
         featureId,
@@ -2733,7 +2736,7 @@ let mockValidationCallbacks: ((event: IssueValidationEvent) => void)[] = [];
 function createMockGitHubAPI(): GitHubAPI {
   return {
     checkRemote: async (projectPath: string) => {
-      console.log('[Mock] Checking GitHub remote for:', projectPath);
+      logger.info('Mock Checking GitHub remote for:', projectPath);
       return {
         success: true,
         hasGitHubRemote: false,
@@ -2743,7 +2746,7 @@ function createMockGitHubAPI(): GitHubAPI {
       };
     },
     listIssues: async (projectPath: string) => {
-      console.log('[Mock] Listing GitHub issues for:', projectPath);
+      logger.info('Mock Listing GitHub issues for:', projectPath);
       return {
         success: true,
         openIssues: [],
@@ -2751,7 +2754,7 @@ function createMockGitHubAPI(): GitHubAPI {
       };
     },
     listPRs: async (projectPath: string) => {
-      console.log('[Mock] Listing GitHub PRs for:', projectPath);
+      logger.info('Mock Listing GitHub PRs for:', projectPath);
       return {
         success: true,
         openPRs: [],
@@ -2759,7 +2762,7 @@ function createMockGitHubAPI(): GitHubAPI {
       };
     },
     validateIssue: async (projectPath: string, issue: IssueValidationInput, model?: ModelAlias) => {
-      console.log('[Mock] Starting async validation:', { projectPath, issue, model });
+      logger.info('Mock Starting async validation:', { projectPath, issue, model });
 
       // Simulate async validation in background
       setTimeout(() => {
@@ -2800,7 +2803,7 @@ function createMockGitHubAPI(): GitHubAPI {
       };
     },
     getValidationStatus: async (projectPath: string, issueNumber?: number) => {
-      console.log('[Mock] Getting validation status:', { projectPath, issueNumber });
+      logger.info('Mock Getting validation status:', { projectPath, issueNumber });
       return {
         success: true,
         isRunning: false,
@@ -2808,21 +2811,21 @@ function createMockGitHubAPI(): GitHubAPI {
       };
     },
     stopValidation: async (projectPath: string, issueNumber: number) => {
-      console.log('[Mock] Stopping validation:', { projectPath, issueNumber });
+      logger.info('Mock Stopping validation:', { projectPath, issueNumber });
       return {
         success: true,
         message: `Validation for issue #${issueNumber} stopped`,
       };
     },
     getValidations: async (projectPath: string, issueNumber?: number) => {
-      console.log('[Mock] Getting validations:', { projectPath, issueNumber });
+      logger.info('Mock Getting validations:', { projectPath, issueNumber });
       return {
         success: true,
         validations: [],
       };
     },
     markValidationViewed: async (projectPath: string, issueNumber: number) => {
-      console.log('[Mock] Marking validation as viewed:', { projectPath, issueNumber });
+      logger.info('Mock Marking validation as viewed:', { projectPath, issueNumber });
       return {
         success: true,
       };
@@ -2834,7 +2837,7 @@ function createMockGitHubAPI(): GitHubAPI {
       };
     },
     getIssueComments: async (projectPath: string, issueNumber: number, cursor?: string) => {
-      console.log('[Mock] Getting issue comments:', { projectPath, issueNumber, cursor });
+      logger.info('Mock Getting issue comments:', { projectPath, issueNumber, cursor });
       return {
         success: true,
         comments: [],

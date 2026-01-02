@@ -1,5 +1,8 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
+import { createLogger } from '@automaker/utils/logger';
 import { useAppStore } from '@/store/app-store';
+
+const logger = createLogger('AgentSession');
 
 interface UseAgentSessionOptions {
   projectPath: string | undefined;
@@ -44,7 +47,7 @@ export function useAgentSession({ projectPath }: UseAgentSessionOptions): UseAge
 
     const lastSessionId = getLastSelectedSession(projectPath);
     if (lastSessionId) {
-      console.log('[AgentView] Restoring last selected session:', lastSessionId);
+      logger.info('Restoring last selected session:', lastSessionId);
       setCurrentSessionId(lastSessionId);
     }
   }, [projectPath, getLastSelectedSession]);

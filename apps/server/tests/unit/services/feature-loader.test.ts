@@ -144,7 +144,7 @@ describe('feature-loader.ts', () => {
       expect(result).toHaveLength(1);
       expect(result[0].id).toBe('feature-2');
       expect(consoleSpy).toHaveBeenCalledWith(
-        '[FeatureLoader]',
+        expect.stringMatching(/WARN.*\[FeatureLoader\]/),
         expect.stringContaining("missing required 'id' field")
       );
 
@@ -191,7 +191,7 @@ describe('feature-loader.ts', () => {
 
       expect(result).toEqual([]);
       expect(consoleSpy).toHaveBeenCalledWith(
-        '[FeatureLoader]',
+        expect.stringMatching(/WARN.*\[FeatureLoader\]/),
         expect.stringContaining('Failed to parse feature.json')
       );
 
@@ -363,7 +363,7 @@ describe('feature-loader.ts', () => {
 
       expect(result).toBe(false);
       expect(consoleSpy).toHaveBeenCalledWith(
-        '[FeatureLoader]',
+        expect.stringMatching(/ERROR.*\[FeatureLoader\]/),
         expect.stringContaining('Failed to delete feature'),
         expect.objectContaining({ message: 'Permission denied' })
       );
