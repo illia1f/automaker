@@ -9,7 +9,7 @@ import {
 import { useAppStore } from '@/store/app-store';
 import { useSetupStore } from '@/store/setup-store';
 import { useAuthStore } from '@/store/auth-store';
-import { getElectronAPI, isElectron } from '@/lib/electron';
+import { getElectronAPI, isElectron, Project } from '@/lib/electron';
 import { isMac } from '@/lib/utils';
 import {
   initApiKey,
@@ -18,16 +18,23 @@ import {
   checkSandboxEnvironment,
   getServerUrlSync,
 } from '@/lib/http-api-client';
-import { Toaster } from 'sonner';
+import { toast, Toaster } from 'sonner';
 import { ThemeOption, themeOptions } from '@/config/theme-options';
 import { SandboxRiskDialog } from '@/components/dialogs/sandbox-risk-dialog';
 import { SandboxRejectionScreen } from '@/components/dialogs/sandbox-rejection-screen';
+import { useStoreHydration } from '@/hooks';
+import { ProjectPathValidationDialog } from '@/components/dialogs/project-path-validation-dialog';
+import { validateProjectPath } from '@/lib/validate-project-path';
 
 function RootLayoutContent() {
   const location = useLocation();
   const {
     setIpcConnected,
     currentProject,
+    projects,
+    setProjects,
+    setCurrentProject,
+    removeProject,
     getEffectiveTheme,
     skipSandboxWarning,
     setSkipSandboxWarning,
@@ -36,12 +43,14 @@ function RootLayoutContent() {
   const navigate = useNavigate();
   const [isMounted, setIsMounted] = useState(false);
   const [streamerPanelOpen, setStreamerPanelOpen] = useState(false);
-  const [setupHydrated, setSetupHydrated] = useState(
-    () => useSetupStore.persist?.hasHydrated?.() ?? false
-  );
+  const appHydrated = useStoreHydration(useAppStore);
+  const setupHydrated = useStoreHydration(useSetupStore);
   const authChecked = useAuthStore((s) => s.authChecked);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const { openFileBrowser } = useFileBrowser();
+
+  const [validationDialogOpen, setValidationDialogOpen] = useState(false);
+  const [invalidProject, setInvalidProject] = useState<Project | null>(null);
 
   const isSetupRoute = location.pathname === '/setup';
   const isLoginRoute = location.pathname === '/login';
@@ -213,24 +222,6 @@ function RootLayoutContent() {
     initAuth();
   }, []); // Runs once per load; auth state drives routing rules
 
-  // Wait for setup store hydration before enforcing routing rules
-  useEffect(() => {
-    if (useSetupStore.persist?.hasHydrated?.()) {
-      setSetupHydrated(true);
-      return;
-    }
-
-    const unsubscribe = useSetupStore.persist?.onFinishHydration?.(() => {
-      setSetupHydrated(true);
-    });
-
-    return () => {
-      if (typeof unsubscribe === 'function') {
-        unsubscribe();
-      }
-    };
-  }, []);
-
   // Routing rules (web mode):
   // - If not authenticated: force /login (even /setup is protected)
   // - If authenticated but setup incomplete: force /setup
@@ -290,12 +281,64 @@ function RootLayoutContent() {
     testConnection();
   }, [setIpcConnected]);
 
-  // Restore to board view if a project was previously open
+  // Restore to board view if a project was previously open (with path validation)
   useEffect(() => {
-    if (isMounted && currentProject && location.pathname === '/') {
-      navigate({ to: '/board' });
+    if (!isMounted || !currentProject || location.pathname !== '/') return;
+    if (!authChecked || !appHydrated) return;
+    if (!isElectronMode() && !isAuthenticated) return;
+
+    // Additional check for Electron mode: only proceed if IPC is connected
+    if (isElectronMode()) {
+      const testIpcAndValidate = async () => {
+        try {
+          const api = getElectronAPI();
+          const result = await api.ping();
+          if (result !== 'pong') {
+            console.log('IPC not connected, skipping project restoration');
+            return;
+          }
+
+          // Validate project path before restoring
+          const isValid = await validateProjectPath(currentProject);
+          if (!isValid) {
+            console.log('Project path is invalid, showing validation dialog');
+            setInvalidProject(currentProject);
+            setValidationDialogOpen(true);
+            return;
+          }
+
+          navigate({ to: '/board' });
+        } catch (error) {
+          console.error('Failed to validate project or test IPC:', error);
+        }
+      };
+
+      testIpcAndValidate();
+    } else {
+      // Web mode: just validate and restore
+      const validateAndRestore = async () => {
+        const isValid = await validateProjectPath(currentProject);
+        if (!isValid) {
+          console.log('Project path is invalid, showing validation dialog');
+          setInvalidProject(currentProject);
+          setValidationDialogOpen(true);
+          return;
+        }
+
+        navigate({ to: '/board' });
+      };
+
+      validateAndRestore();
     }
-  }, [isMounted, currentProject, location.pathname, navigate]);
+  }, [
+    isMounted,
+    currentProject,
+    location.pathname,
+    navigate,
+    authChecked,
+    appHydrated,
+    isAuthenticated,
+  ]);
 
   // Apply theme class to document - use deferred value to avoid blocking UI
   useEffect(() => {
@@ -317,6 +360,54 @@ function RootLayoutContent() {
       root.classList.add('light');
     }
   }, [deferredTheme]);
+
+  // Dialog handlers for project path validation
+  const handleRefreshPath = useCallback(
+    async (project: Project, newPath: string) => {
+      // Validate new path
+      const isValid = await validateProjectPath({ ...project, path: newPath });
+
+      if (!isValid) {
+        toast.error('Invalid path', {
+          description: 'Selected path does not exist or is not accessible',
+        });
+        return; // Stay on dialog
+      }
+
+      // Update project in store
+      const updatedProjects = projects.map((p) =>
+        p.id === project.id ? { ...p, path: newPath, lastOpened: new Date().toISOString() } : p
+      );
+      setProjects(updatedProjects);
+
+      // Update current project reference
+      setCurrentProject({ ...project, path: newPath });
+
+      // Close dialog and navigate
+      setValidationDialogOpen(false);
+      navigate({ to: '/board' });
+
+      toast.success('Project path updated');
+    },
+    [projects, setProjects, setCurrentProject, navigate]
+  );
+
+  const handleRemoveProject = useCallback(
+    (project: Project) => {
+      removeProject(project.id);
+      setCurrentProject(null);
+      setValidationDialogOpen(false);
+      // Already on welcome page
+      toast.info('Project removed', { description: project.name });
+    },
+    [removeProject, setCurrentProject]
+  );
+
+  const handleDismiss = useCallback(() => {
+    setCurrentProject(null);
+    setValidationDialogOpen(false);
+    // Already on welcome page
+  }, [setCurrentProject]);
 
   // Show rejection screen if user denied sandbox risk (web mode only)
   if (sandboxStatus === 'denied' && !isElectron()) {
@@ -411,6 +502,15 @@ function RootLayoutContent() {
         open={sandboxStatus === 'needs-confirmation'}
         onConfirm={handleSandboxConfirm}
         onDeny={handleSandboxDeny}
+      />
+
+      <ProjectPathValidationDialog
+        open={validationDialogOpen}
+        onOpenChange={setValidationDialogOpen}
+        project={invalidProject}
+        onRefreshPath={handleRefreshPath}
+        onRemoveProject={handleRemoveProject}
+        onDismiss={handleDismiss}
       />
     </main>
   );
