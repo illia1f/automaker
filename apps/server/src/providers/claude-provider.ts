@@ -7,7 +7,10 @@
 
 import { query, type Options } from '@anthropic-ai/claude-agent-sdk';
 import { BaseProvider } from './base-provider.js';
-import { classifyError, getUserFriendlyErrorMessage } from '@automaker/utils';
+import { classifyError, getUserFriendlyErrorMessage, createLogger } from '@automaker/utils';
+
+const logger = createLogger('ClaudeProvider');
+import { getThinkingTokenBudget } from '@automaker/types';
 import type {
   ExecuteOptions,
   ProviderMessage,
@@ -60,23 +63,20 @@ export class ClaudeProvider extends BaseProvider {
       abortController,
       conversationHistory,
       sdkSessionId,
+      thinkingLevel,
     } = options;
 
+    // Convert thinking level to token budget
+    const maxThinkingTokens = getThinkingTokenBudget(thinkingLevel);
+
     // Build Claude SDK options
-    // MCP permission logic - determines how to handle tool permissions when MCP servers are configured.
-    // This logic mirrors buildMcpOptions() in sdk-options.ts but is applied here since
-    // the provider is the final point where SDK options are constructed.
+    // AUTONOMOUS MODE: Always bypass permissions for fully autonomous operation
     const hasMcpServers = options.mcpServers && Object.keys(options.mcpServers).length > 0;
-    // Default to true for autonomous workflow. Security is enforced when adding servers
-    // via the security warning dialog that explains the risks.
-    const mcpAutoApprove = options.mcpAutoApproveTools ?? true;
-    const mcpUnrestricted = options.mcpUnrestrictedTools ?? true;
     const defaultTools = ['Read', 'Write', 'Edit', 'Glob', 'Grep', 'Bash', 'WebSearch', 'WebFetch'];
 
-    // Determine permission mode based on settings
-    const shouldBypassPermissions = hasMcpServers && mcpAutoApprove;
-    // Determine if we should restrict tools (only when no MCP or unrestricted is disabled)
-    const shouldRestrictTools = !hasMcpServers || !mcpUnrestricted;
+    // AUTONOMOUS MODE: Always bypass permissions and allow unrestricted tools
+    // Only restrict tools when no MCP servers are configured
+    const shouldRestrictTools = !hasMcpServers;
 
     const sdkOptions: Options = {
       model,
@@ -88,10 +88,9 @@ export class ClaudeProvider extends BaseProvider {
       // Only restrict tools if explicitly set OR (no MCP / unrestricted disabled)
       ...(allowedTools && shouldRestrictTools && { allowedTools }),
       ...(!allowedTools && shouldRestrictTools && { allowedTools: defaultTools }),
-      // When MCP servers are configured and auto-approve is enabled, use bypassPermissions
-      permissionMode: shouldBypassPermissions ? 'bypassPermissions' : 'default',
-      // Required when using bypassPermissions mode
-      ...(shouldBypassPermissions && { allowDangerouslySkipPermissions: true }),
+      // AUTONOMOUS MODE: Always bypass permissions and allow dangerous operations
+      permissionMode: 'bypassPermissions',
+      allowDangerouslySkipPermissions: true,
       abortController,
       // Resume existing SDK session if we have a session ID
       ...(sdkSessionId && conversationHistory && conversationHistory.length > 0
@@ -103,6 +102,8 @@ export class ClaudeProvider extends BaseProvider {
       ...(options.sandbox && { sandbox: options.sandbox }),
       // Forward MCP servers configuration
       ...(options.mcpServers && { mcpServers: options.mcpServers }),
+      // Extended thinking configuration
+      ...(maxThinkingTokens && { maxThinkingTokens }),
     };
 
     // Build prompt payload
@@ -140,7 +141,7 @@ export class ClaudeProvider extends BaseProvider {
       const errorInfo = classifyError(error);
       const userMessage = getUserFriendlyErrorMessage(error);
 
-      console.error('[ClaudeProvider] executeQuery() error during execution:', {
+      logger.error('executeQuery() error during execution:', {
         type: errorInfo.type,
         message: errorInfo.message,
         isRateLimit: errorInfo.isRateLimit,
